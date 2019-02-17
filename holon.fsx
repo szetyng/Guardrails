@@ -1,3 +1,4 @@
+open System.Collections
 type Agent<'T> = MailboxProcessor<'T>
 type Message = 
     | Apply of AsyncReplyChannel<bool>
@@ -8,11 +9,17 @@ type Message =
     // Allocate
     // Report
 
+type ResAllocMethod = 
+    | Queue 
+    | Ration
+
 type Holon(name) = 
     // member institution properties
     let mutable memberOf:Holon list = []
     let mutable offenceLevel = 0
     let mutable sanctionLevel = 0
+    let mutable demanded = 0
+    let mutable allocated = 0
     // TODO -> set characteristics of the agent
     // eg: propensity to misappropriate
     // TOTHINK -> difference between pow, per and obl?
@@ -23,7 +30,10 @@ type Holon(name) =
     let mutable head:Holon list = []
     let mutable sanctionLimit = 2
     let mutable membershipLimit = 0
-    let mutable resources = 0
+    let mutable resources = 100
+    let mutable demandQ:Holon list = []
+    let mutable raMethod = Queue
+    let mutable rationLimit = 20
 
     let addMember newbie = members <- (List.append members [newbie])      
 
@@ -54,6 +64,11 @@ type Holon(name) =
     member this.SanctionLimit = sanctionLimit
     member this.MembershipLimit = membershipLimit
     member this.Resources = resources
+    member this.DemandQ = demandQ
+    member this.GetDemanded = demanded
+    member this.RaMethod = raMethod
+    member this.GetAllocated = allocated
+    member this.RationLimit = rationLimit
 
     // Setting properties
     member this.JoinHolon h = memberOf <- (List.append memberOf [h])
@@ -66,35 +81,15 @@ type Holon(name) =
     member this.SetSanctionLimit n = sanctionLimit <- n
     member this.SetInstSize n = membershipLimit <- n 
     member this.AmendResources n = resources <- resources + n
-    
+    member this.AmendDemandQ newQ = demandQ <- newQ
+    member this.SetDemand d = demanded <- d
+    member this.ChangeRaMethod meth = raMethod <- meth
+    member this.SetAllocated n = allocated <- n
+    member this.ChangeRationLimit r = rationLimit <- r
+
     /// Gatekeeper is empowered to include members into the institution
     member this.IncludeMember (inst:Holon) = 
         let instReply = 
             inst.Self.PostAndReply(fun replyChannel -> (Apply(replyChannel)))
         instReply    
 
-/// Applicant applies to inst
-let applyToInstitution (applicant:Holon) (inst:Holon) = 
-    let crit = [applicant.SanctionLevel < inst.SanctionLimit ; inst.MembershipLimit > inst.MemberOf.Length]
-    let rec checkCrit (supraH:Holon) (h:Holon) lst = 
-        match lst with 
-        | [] -> true
-        | true::rest -> checkCrit supraH h rest
-        | false::_ -> false
-    let applicationResult = 
-        match checkCrit inst applicant crit with
-        | true ->
-            match inst.Gatekeeper with
-            | Some gatekeeper ->
-                printfn "%A is applying to Institution %A via Gatekeeper %A" applicant.Name inst.Name gatekeeper.Name
-                Some (gatekeeper.IncludeMember inst)
-            | None -> None
-        | false -> Some (false)
-
-    match applicationResult with
-    | Some true ->
-        printfn "Result of agent %A applying to %A is %A" applicant.Name inst.Name applicationResult
-        inst.AddMember(applicant)
-        applicant.JoinHolon(inst)
-    | Some false -> printfn "Result of agent %A applying to %A is %A" applicant.Name inst.Name applicationResult
-    | None -> printfn "%A does not have a gatekeeper, or gatekeeper did not reply - it cannot admit new member %A" inst.Name applicant.Name  
