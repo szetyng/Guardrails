@@ -13,6 +13,9 @@ type ResAllocMethod =
     | Queue 
     | Ration
 
+type WinDetMethod = 
+    | Plurality
+
 type Holon(name) = 
     // member institution properties
     let mutable memberOf:Holon list = []
@@ -30,10 +33,13 @@ type Holon(name) =
     let mutable head:Holon list = []
     let mutable sanctionLimit = 2
     let mutable membershipLimit = 0
-    let mutable resources = 100
+    let mutable resources = 0
     let mutable demandQ:Holon list = []
     let mutable raMethod = Queue
+    let mutable wdMethod = Plurality
     let mutable rationLimit = 20
+    let mutable issue = false
+    let mutable votelist:ResAllocMethod list = []
 
     let addMember newbie = members <- (List.append members [newbie])      
 
@@ -67,8 +73,12 @@ type Holon(name) =
     member this.DemandQ = demandQ
     member this.GetDemanded = demanded
     member this.RaMethod = raMethod
+    member this.WdMethod = wdMethod
     member this.GetAllocated = allocated
     member this.RationLimit = rationLimit
+    member this.Issue = issue
+    member this.Votelist = votelist
+
 
     // Setting properties
     member this.JoinHolon h = memberOf <- (List.append memberOf [h])
@@ -84,8 +94,12 @@ type Holon(name) =
     member this.AmendDemandQ newQ = demandQ <- newQ
     member this.SetDemand d = demanded <- d
     member this.ChangeRaMethod meth = raMethod <- meth
+    member this.ChangeWdMethod meth = wdMethod <- meth
     member this.SetAllocated n = allocated <- n
     member this.ChangeRationLimit r = rationLimit <- r
+    member this.ToggleIssue b = issue <- b
+    member this.AddVote v = votelist <- votelist @ [v]
+    member this.ClearVotes = votelist <- []
 
     /// Gatekeeper is empowered to include members into the institution
     member this.IncludeMember (inst:Holon) = 

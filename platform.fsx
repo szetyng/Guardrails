@@ -27,7 +27,7 @@ let applyToInstitution (applicant:Holon) (inst:Holon) makeCrit =
     | Some false -> printfn "Result of agent %A applying to %A is %A" applicant.Name inst.Name applicationResult
     | None -> printfn "%A does not have a gatekeeper, or gatekeeper did not reply - it cannot admit new member %A" inst.Name applicant.Name  
 
-/// P2: mem demands for r amount of resources from inst
+/// P2: indiv mem demands for r amount of resources from inst
 let demandResources (mem:Holon) (inst:Holon) r = 
     let q = inst.DemandQ
 
@@ -38,7 +38,7 @@ let demandResources (mem:Holon) (inst:Holon) r =
             mem.SetDemand r
             inst.AmendDemandQ (List.append q [mem])
 
-// 
+// P2: inst allocates resources to its demand queue
 let allocateResources (inst:Holon)  = 
     // Do not deduct from resources 
     // Allocating, not appropriating yet
@@ -87,6 +87,36 @@ let allocateResources (inst:Holon)  =
 // let appropriateResources (mem:Holon) (inst:Holon) = 
     // something to do with propensity of compliance here
 
+// P3: 
+let voting (mem:Holon) (inst:Holon) vote = 
+    // is a member and issue is open
+    if (List.contains inst mem.MemberOf) && inst.Issue then 
+        inst.AddVote vote
+    else
+        printfn "%A not allowed to vote" mem.Name    
+
+let winnerDetermination (inst:Holon) = 
+    match inst.WdMethod with
+    | Plurality -> 
+        let w = 
+            inst.Votelist
+            |> Seq.countBy id
+            |> Seq.maxBy snd
+            |> fst
+        inst.ClearVotes        
+        inst.ChangeRaMethod w         
+
+
+// P3: Head should be declaring winner
+let declareWinner (inst:Holon) = 
+    if not inst.Issue then
+        winnerDetermination inst
+    else
+        printfn "Issue is not yet closed"
+    
+        
+
+
 
 
 // Platform helper functions    
@@ -103,6 +133,9 @@ let createInstitution (name:string) memberLst membershipCrit =
     
     // Principle 1: Membership criteria
     inst.SetInstSize membershipCrit
+
+    // Principle 2: Concgruence
+    inst.AmendResources 100
 
     inst
     

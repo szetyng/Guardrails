@@ -1,3 +1,7 @@
+open System.Collections
+open System.Collections.Generic
+open System.Collections.Generic
+open System.Collections.Generic
 #load "holon.fsx"
 #load "platform.fsx"
 open Holon 
@@ -33,3 +37,15 @@ demandResources april parks 10
 demandResources ben parks 5
 
 allocateResources parks 
+
+// Principle 3: collective choice arrangements
+parks.ToggleIssue true
+voting leslie parks Ration
+voting ron parks Queue
+voting ben parks Ration
+voting tom parks Queue
+voting april parks Queue
+voting mark parks Ration
+
+parks.ToggleIssue false
+declareWinner parks 

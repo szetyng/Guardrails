@@ -13,3 +13,8 @@ Agent `A` is empowered to
 - `Demand` R amount of resources from a supra-holon if `A` is a member of the supra-holon and has not demanded anything in this time slice (?) and it has not received any sanctions
 
 Valid demands are added to the `demandQ`, and the `Head` is empowered to `Allocate` resources based on the resource allocation method. 
+
+Initially, every holon has 0 resources, except for the supra-holon, which has 100. The amount changes when the member holon appropriates resources from the supra-holon.
+
+## Principle 3: Collective Choice Arrangements
+Agent `A` is empowered to vote on issue M if the issue is open and A is a member of the institution. This adds A's vote to the votelist. The head is obligated to declare a winner of the vote using whatever `WinnerDeterminationMethod` is being employed, when the issue is closed.
