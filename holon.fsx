@@ -29,8 +29,8 @@ type Holon(name) =
     
     // supra-institution properties
     let mutable members:Holon list = []
-    let mutable gatekeeper:Holon list = []
-    let mutable head:Holon list = []
+    let mutable gatekeeper:Holon option = None
+    let mutable head:Holon option= None
     let mutable sanctionLimit = 2
     let mutable membershipLimit = 0
     let mutable resources = 0
@@ -59,48 +59,65 @@ type Holon(name) =
     )
 
     // TODO -> make properties set and get instead
-    // Properties, so that they can be read
+    // Read-only properties
     member this.Self = agent
     member this.Name = name
+
+    // Member holon properties
     member this.MemberOf = memberOf
-    member this.Members = members
-    member this.Gatekeeper = List.tryHead gatekeeper
-    member this.Head = List.tryHead head
-    member this.SanctionLevel = sanctionLevel
-    member this.SanctionLimit = sanctionLimit
-    member this.MembershipLimit = membershipLimit
-    member this.Resources = resources
-    member this.DemandQ = demandQ
-    member this.GetDemanded = demanded
-    member this.RaMethod = raMethod
-    member this.WdMethod = wdMethod
-    member this.GetAllocated = allocated
-    member this.RationLimit = rationLimit
-    member this.Issue = issue
-    member this.Votelist = votelist
-
-
-    // Setting properties
     member this.JoinHolon h = memberOf <- (List.append memberOf [h])
-    member this.SetMembers lst = members <- lst
-    member this.AddMember h = members <- (List.append members [h])
-    member this.SetGatekeeper holon = gatekeeper <- [holon]
-    member this.SetHead holon = head <- [holon]
-    /// Deduct sanctions by letting n be a negative number
-    member this.AmendSanctions n = sanctionLevel <- sanctionLevel + n
-    member this.SetSanctionLimit n = sanctionLimit <- n
-    member this.SetInstSize n = membershipLimit <- n 
-    member this.AmendResources n = resources <- resources + n
-    member this.AmendDemandQ newQ = demandQ <- newQ
-    member this.SetDemand d = demanded <- d
-    member this.ChangeRaMethod meth = raMethod <- meth
-    member this.ChangeWdMethod meth = wdMethod <- meth
-    member this.SetAllocated n = allocated <- n
-    member this.ChangeRationLimit r = rationLimit <- r
-    member this.ToggleIssue b = issue <- b
-    member this.AddVote v = votelist <- votelist @ [v]
-    member this.ClearVotes = votelist <- []
+    member this.SanctionLevel  /// Deduct sanctions by letting n be a negative number 
+        with get() = sanctionLevel
+        and set(change) = sanctionLevel <- sanctionLevel + change     
+    member this.Demanded
+        with get() = demanded
+        and set(n) = demanded <- n    
+    member this.Allocated 
+        with get() = allocated
+        and set(n) = allocated <- n      
 
+
+    // Supra-holon properties
+    member this.Members 
+        with get() = members
+        and set(memLst) = members <- memLst
+    member this.AddMember h = members <- (List.append members [h])    
+    member this.Head
+        with get() = head
+        and set(holon) = head <- holon
+    member this.Gatekeeper
+        with get() = gatekeeper
+        and set(holon) = gatekeeper <- holon   
+    member this.SanctionLimit
+        with get() = sanctionLimit
+        and set(n) = sanctionLimit <- n     
+    member this.MembershipLimit 
+        with get() = membershipLimit
+        and set(n) = membershipLimit <- n    
+    member this.DemandQ 
+        with get() = demandQ
+        and set(newQ) = demandQ <- newQ
+    member this.RaMethod
+        with get() = raMethod
+        and set(meth) = raMethod <- meth    
+    member this.WdMethod
+        with get() = wdMethod
+        and set(meth) = wdMethod <- meth    
+    member this.RationLimit 
+        with get() = rationLimit
+        and set(n) = rationLimit <- n    
+    member this.Issue
+        with get() = issue
+        and set(b) = issue <- b 
+    member this.Votelist = votelist   
+    member this.AddVote v = votelist <- votelist @ [v]
+    member this.ClearVotes = votelist <- []   
+    
+    // Both
+    member this.Resources 
+        with get() = resources
+        and set(n) = resources <- resources + n   
+            
     /// Gatekeeper is empowered to include members into the institution
     member this.IncludeMember (inst:Holon) = 
         let instReply = 

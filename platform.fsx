@@ -35,8 +35,8 @@ let demandResources (mem:Holon) (inst:Holon) r =
     // mem is a member of inst and has no sanctions
     if (List.contains inst mem.MemberOf) && (mem.SanctionLevel=0)
         then 
-            mem.SetDemand r
-            inst.AmendDemandQ (List.append q [mem])
+            mem.Demanded <- r
+            inst.DemandQ <- (List.append q [mem])
 
 // P2: inst allocates resources to its demand queue
 let allocateResources (inst:Holon)  = 
@@ -52,16 +52,16 @@ let allocateResources (inst:Holon)  =
         let rec allocQ (head:Holon) (q:Holon list) (r:int) =
             match (q, r) with
             | mem::rest, res -> 
-                let d = mem.GetDemanded
+                let d = mem.Demanded
                 if res >= d then 
                     // TODO: how to make head allocate resources? Does it matter?
-                    mem.SetAllocated d
+                    mem.Allocated <- d
                     allocQ head rest (r-d)
                 else if res <> 0 && d <> 0 then
-                    mem.SetAllocated res // nothing left to give, no need to recurse
+                    mem.Allocated <- res // nothing left to give, no need to recurse
                     printfn "Inst has finished allocating resources"
                 else 
-                    mem.SetAllocated 0 // safety  
+                    mem.Allocated <- 0 // safety  
             | [], _ -> printfn "Inst has finished allocating resources"
         allocQ head inst.DemandQ r           
     | Ration ->
@@ -69,17 +69,17 @@ let allocateResources (inst:Holon)  =
         let rec allocR (q:Holon list) (r:int) =
             match (q, r) with
             | mem::rest, res ->
-                let d = mem.GetDemanded
+                let d = mem.Demanded
                 // if demand less than equal to ration, allocate demand
                 if d <= limit then
-                    mem.SetAllocated d
+                    mem.Allocated <- d
                     allocR rest (r-d)
                 // if demand more than ration, allocate ration                
                 else if d > limit && res <> 0 then
-                    mem.SetAllocated limit
+                    mem.Allocated <- limit
                     allocR rest (r-limit)
                 else 
-                    mem.SetAllocated 0
+                    mem.Allocated <- 0
             | [], _ -> printfn "Inst has finished allocating resources"                
         allocR inst.DemandQ r                                              
 
@@ -104,7 +104,7 @@ let winnerDetermination (inst:Holon) =
             |> Seq.maxBy snd
             |> fst
         inst.ClearVotes        
-        inst.ChangeRaMethod w         
+        inst.RaMethod <- w         
 
 
 // P3: Head should be declaring winner
@@ -125,17 +125,17 @@ let declareWinner (inst:Holon) =
 /// membershipCrit: limit on number of members
 let createInstitution (name:string) memberLst membershipCrit = 
     let inst = Holon(name)
-    inst.SetMembers memberLst
+    inst.Members <- memberLst
     List.map (fun (h:Holon) -> h.JoinHolon inst) memberLst |> ignore
 
-    inst.SetHead (List.item 0 memberLst)
-    inst.SetGatekeeper (List.item 1 memberLst)
+    inst.Head <- (Some (List.item 0 memberLst))
+    inst.Gatekeeper <- (Some (List.item 1 memberLst))
     
     // Principle 1: Membership criteria
-    inst.SetInstSize membershipCrit
+    inst.MembershipLimit <- membershipCrit
 
-    // Principle 2: Concgruence
-    inst.AmendResources 100
+    // Principle 2: Congruence
+    inst.Resources <- 100
 
     inst
     
