@@ -38,56 +38,60 @@ let demandResources (mem:Holon) (inst:Holon) r =
             mem.Demanded <- r
             inst.DemandQ <- (List.append q [mem])
 
-// P2: inst allocates resources to its demand queue
-let allocateResources (inst:Holon)  = 
+// let demandResources (mem:Holon) (inst:Holon) r = 
+//     if powDemandResources mem inst then
+//         let q = inst.DemandQ
+//         inst.DemandQ <- q @ [mem]
+//         mem.Demanded <-         
+
+// P2: Head allocates resources to the members in the demand queue of the inst
+let allocateResources (head:Holon) (inst:Holon)  = 
     // Do not deduct from resources 
     // Allocating, not appropriating yet
     let r = inst.Resources
-    let head = 
-        match inst.Head with
-        | Some h -> h
-        | None -> failwithf "no head"
-    match inst.RaMethod with
-    | Queue -> 
-        let rec allocQ (head:Holon) (q:Holon list) (r:int) =
-            match (q, r) with
-            | mem::rest, res -> 
-                let d = mem.Demanded
-                if res >= d then 
-                    // TODO: how to make head allocate resources? Does it matter?
-                    mem.Allocated <- d
-                    allocQ head rest (r-d)
-                else if res <> 0 && d <> 0 then
-                    mem.Allocated <- res // nothing left to give, no need to recurse
-                    printfn "Inst has finished allocating resources"
-                else 
-                    mem.Allocated <- 0 // safety  
-            | [], _ -> printfn "Inst has finished allocating resources"
-        allocQ head inst.DemandQ r           
-    | Ration ->
-        let limit = inst.RationLimit
-        let rec allocR (q:Holon list) (r:int) =
-            match (q, r) with
-            | mem::rest, res ->
-                let d = mem.Demanded
-                // if demand less than equal to ration, allocate demand
-                if d <= limit then
-                    mem.Allocated <- d
-                    allocR rest (r-d)
-                // if demand more than ration, allocate ration                
-                else if d > limit && res <> 0 then
-                    mem.Allocated <- limit
-                    allocR rest (r-limit)
-                else 
-                    mem.Allocated <- 0
-            | [], _ -> printfn "Inst has finished allocating resources"                
-        allocR inst.DemandQ r                                              
+    if Some head = inst.Head then 
+        match inst.RaMethod with
+        | Queue -> 
+            let rec allocQ (head:Holon) (q:Holon list) (r:int) =
+                match (q, r) with
+                | mem::rest, res -> 
+                    let d = mem.Demanded
+                    if res >= d then 
+                        // TODO: how to make head allocate resources? Does it matter?
+                        mem.Allocated <- d
+                        allocQ head rest (r-d)
+                    else if res <> 0 && d <> 0 then
+                        mem.Allocated <- res // nothing left to give, no need to recurse
+                        printfn "Inst has finished allocating resources"
+                    else 
+                        mem.Allocated <- 0 // safety  
+                | [], _ -> printfn "Inst has finished allocating resources"
+            allocQ head inst.DemandQ r           
+        | Ration ->
+            let limit = inst.RationLimit
+            let rec allocR (q:Holon list) (r:int) =
+                match (q, r) with
+                | mem::rest, res ->
+                    let d = mem.Demanded
+                    // if demand less than equal to ration, allocate demand
+                    if d <= limit then
+                        mem.Allocated <- d
+                        allocR rest (r-d)
+                    // if demand more than ration, allocate ration                
+                    else if d > limit && res <> 0 then
+                        mem.Allocated <- limit
+                        allocR rest (r-limit)
+                    else 
+                        mem.Allocated <- 0
+                | [], _ -> printfn "Inst has finished allocating resources"                
+            allocR inst.DemandQ r                                              
 
 
 // let appropriateResources (mem:Holon) (inst:Holon) = 
     // something to do with propensity of compliance here
 
-// P3: 
+// P3: indiv mem wants to vote
+// TODO: how does it decide on what to vote for?
 let voting (mem:Holon) (inst:Holon) vote = 
     // is a member and issue is open
     if (List.contains inst mem.MemberOf) && inst.Issue then 
@@ -95,6 +99,7 @@ let voting (mem:Holon) (inst:Holon) vote =
     else
         printfn "%A not allowed to vote" mem.Name    
 
+// get winner using wdm
 let winnerDetermination (inst:Holon) = 
     match inst.WdMethod with
     | Plurality -> 
@@ -107,9 +112,10 @@ let winnerDetermination (inst:Holon) =
         inst.RaMethod <- w         
 
 
-// P3: Head should be declaring winner
-let declareWinner (inst:Holon) = 
-    if not inst.Issue then
+// P3: TODO: Head should be declaring winner when issue is open
+// usind WDM
+let declareWinner (head:Holon) (inst:Holon) = 
+    if Some head = inst.Head && not inst.Issue then
         winnerDetermination inst
     else
         printfn "Issue is not yet closed"

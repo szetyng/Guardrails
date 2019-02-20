@@ -36,7 +36,7 @@ demandResources tom parks 100
 demandResources april parks 10
 demandResources ben parks 5
 
-allocateResources parks 
+allocateResources ron parks 
 
 // Principle 3: collective choice arrangements
 parks.Issue <- true
@@ -48,4 +48,4 @@ voting april parks Queue
 voting mark parks Ration
 
 parks.Issue <- false
-declareWinner parks 
+declareWinner ron parks 
