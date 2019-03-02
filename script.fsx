@@ -1,51 +1,48 @@
-open System.Collections
-open System.Collections.Generic
-open System.Collections.Generic
-open System.Collections.Generic
+open System.Threading
 #load "holon.fsx"
 #load "platform.fsx"
-open Holon 
+open Holon
 open Platform
 
-// Instantiate holons
-let leslie = Holon("leslie")
-let ron = Holon("ron")
-let tom = Holon("tom")
-let april = Holon("april")
+let def = 
+    {     
+        ID = 0;   
+        Name = " ";
+        Resources = 0;
+        RoleOf = None;
+        //Role = None;
+        SanctionLevel = 0;
+        OffenceLevel = 0;
+        MessageQueue = []
+    }
 
-// Instantiate supra-holon
-let parksLst = [ron; leslie; tom; april]
-let parks = createInstitution "parks" parksLst 5
+let parks = {def with Name = "parks"; Resources = 100}
+let ron = {def with ID = 1; Name = "ron"; RoleOf = Some (Head(parks.ID))}
+let leslie = {def with ID = 2; Name = "leslie"; RoleOf = Some (Gatekeeper(parks.ID))}
+
+let holonLst = [parks ; ron ; leslie]
+
+// let initRoles h = 
+//     match (h.MemberOf, h.Role) with
+//     | Some inst, Some Member -> RoleOf (h.ID, Some inst, Some Member)
+//     | Some inst, Some Head -> RoleOf (h.ID, Some inst, Some Head)
+//     | Some inst, Some Gatekeeper -> RoleOf (h.ID, Some inst, Some Gatekeeper)
+//     | Some inst, Some Monitor -> RoleOf (h.ID, Some inst, Some Monitor)
+//     | _ , _ -> RoleOf (h.ID, None, None)
 
 
-// Principle 1: clearly defined boundaries
-let p1Crit (applicant:Holon) (inst:Holon) = 
-    [applicant.SanctionLevel < 2 ; inst.MembershipLimit > inst.Members.Length]
+// let initEnv holons = 
+//     let fLst = []
+//     let rec initEnv holons fLst = 
+//         match holons with
+//         | h::rest -> 
+//             let f = initRoles h
+//             List.append [f] (initEnv rest fLst)
+//         | [] -> fLst
+//     initEnv holons fLst
 
-let ben = Holon("ben")
-applyToInstitution ben parks p1Crit // should work
+// initEnv holonLst
 
-let mark = Holon("mark")
-applyToInstitution mark parks p1Crit // should fail
-
-
-// Principle 2: congruence to local conditions
-demandResources leslie parks 50
-demandResources ron parks 20
-demandResources tom parks 100
-demandResources april parks 10
-demandResources ben parks 5
-
-allocateResources ron parks 
-
-// Principle 3: collective choice arrangements
-parks.Issue <- true
-voting leslie parks Ration
-voting ron parks Queue
-voting ben parks Ration
-voting tom parks Queue
-voting april parks Queue
-voting mark parks Ration
-
-parks.Issue <- false
-declareWinner ron parks 
+let ben = {def with ID = 3; Name = "ben"}
+applyToInst ben parks
+parks
