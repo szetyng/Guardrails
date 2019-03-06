@@ -1,152 +1,122 @@
 #load "holon.fsx"
-open Holon 
+open Holon
 
-/// P1: Applicant applies to inst
-let applyToInstitution (applicant:Holon) (inst:Holon) makeCrit = 
-    let crit = makeCrit applicant inst
-    let rec checkCrit (supraH:Holon) (h:Holon) lst = 
-        match lst with 
-        | [] -> true
-        | true::rest -> checkCrit supraH h rest
-        | false::_ -> false
-    let applicationResult = 
-        match checkCrit inst applicant crit with
-        | true ->
-            match inst.Gatekeeper with
-            | Some gatekeeper ->
-                printfn "%A is applying to Institution %A via Gatekeeper %A" applicant.Name inst.Name gatekeeper.Name
-                Some (gatekeeper.IncludeMember inst)
-            | None -> None
-        | false -> Some (false)
+//********************** Helper functions *******************************/
+let sendMessage msg recipient = 
+    let msgQ = recipient.MessageQueue
+    match msg with
+    | Some m -> 
+        recipient.MessageQueue <- msgQ @ [m]
+        printfn "%s has received message %A" recipient.Name m 
+    | None -> printfn "No message to be sent to %s" recipient.Name
 
-    match applicationResult with
-    | Some true ->
-        printfn "Result of agent %A applying to %A is %A" applicant.Name inst.Name applicationResult
-        inst.AddMember(applicant)
-        applicant.JoinHolon(inst)
-    | Some false -> printfn "Result of agent %A applying to %A is %A" applicant.Name inst.Name applicationResult
-    | None -> printfn "%A does not have a gatekeeper, or gatekeeper did not reply - it cannot admit new member %A" inst.Name applicant.Name  
+/// get holonID of last agent in list of Agents
+let getLatestId agents = 
+    List.last agents
+    |> fun a -> a.ID 
 
-/// P2: indiv mem demands for r amount of resources from inst
-let demandResources (mem:Holon) (inst:Holon) r = 
-    let q = inst.DemandQ
+/// check if Agent occupies Role
+let checkRole agent role =
+    match (role, agent.RoleOf) with
+    | "Head", Some (Head (_)) -> true
+    | "Gatekeeper", Some (Gatekeeper (_)) -> true
+    | "Monitor", Some (Monitor (_)) -> true
+    | "Member", Some (Member (_)) -> true
+    | "Null", None | "None", None -> true
+    | _, _ -> false
 
-    // TODO: operate in time slices, can demand if has not demanded in this time slice
-    // mem is a member of inst and has no sanctions
-    if (List.contains inst mem.MemberOf) && (mem.SanctionLevel=0)
-        then 
-            mem.Demanded <- r
-            inst.DemandQ <- (List.append q [mem])
+/// get holonID of the supra-institution that Agent belongs to
+/// TODO: list might not be sorted
+let getSupraID agent = 
+    match agent.RoleOf with
+    | Some (Head supraID) -> Some supraID
+    | Some (Gatekeeper supraID) -> Some supraID
+    | Some (Monitor supraID) -> Some supraID
+    | Some (Member supraID) -> Some supraID
+    | None -> None
 
-// let demandResources (mem:Holon) (inst:Holon) r = 
-//     if powDemandResources mem inst then
-//         let q = inst.DemandQ
-//         inst.DemandQ <- q @ [mem]
-//         mem.Demanded <-         
+/// get holon record from the list of Agents based on its HolonID
+let getHolon agents holonID = List.tryFind (fun a -> a.ID = holonID) agents
 
-// P2: Head allocates resources to the members in the demand queue of the inst
-let allocateResources (head:Holon) (inst:Holon)  = 
-    // Do not deduct from resources 
-    // Allocating, not appropriating yet
-    let r = inst.Resources
-    if Some head = inst.Head then 
-        match inst.RaMethod with
-        | Queue -> 
-            let rec allocQ (head:Holon) (q:Holon list) (r:int) =
-                match (q, r) with
-                | mem::rest, res -> 
-                    let d = mem.Demanded
-                    if res >= d then 
-                        // TODO: how to make head allocate resources? Does it matter?
-                        mem.Allocated <- d
-                        allocQ head rest (r-d)
-                    else if res <> 0 && d <> 0 then
-                        mem.Allocated <- res // nothing left to give, no need to recurse
-                        printfn "Inst has finished allocating resources"
-                    else 
-                        mem.Allocated <- 0 // safety  
-                | [], _ -> printfn "Inst has finished allocating resources"
-            allocQ head inst.DemandQ r           
-        | Ration ->
-            let limit = inst.RationLimit
-            let rec allocR (q:Holon list) (r:int) =
-                match (q, r) with
-                | mem::rest, res ->
-                    let d = mem.Demanded
-                    // if demand less than equal to ration, allocate demand
-                    if d <= limit then
-                        mem.Allocated <- d
-                        allocR rest (r-d)
-                    // if demand more than ration, allocate ration                
-                    else if d > limit && res <> 0 then
-                        mem.Allocated <- limit
-                        allocR rest (r-limit)
-                    else 
-                        mem.Allocated <- 0
-                | [], _ -> printfn "Inst has finished allocating resources"                
-            allocR inst.DemandQ r                                              
+let findApplicants inst = 
+    let q = inst.MessageQueue
+    let i = inst.ID
+    let applicants = []
+    let rec getting q lst = 
+        match q with
+        | Applied(x, iID)::rest -> 
+            if iID = i then getting rest (List.append lst [x])
+            else getting rest lst
+        | _::rest -> getting rest lst
+        | [] -> lst
+    getting q applicants                
 
 
-// let appropriateResources (mem:Holon) (inst:Holon) = 
-    // something to do with propensity of compliance here
-
-// P3: indiv mem wants to vote
-// TODO: how does it decide on what to vote for?
-let voting (mem:Holon) (inst:Holon) vote = 
-    // is a member and issue is open
-    if (List.contains inst mem.MemberOf) && inst.Issue then 
-        inst.AddVote vote
+/// SIDE-EFFECT: agent.MessageQueue
+let checkAndRemoveFromQ agent fact = 
+    if List.contains fact agent.MessageQueue then 
+        agent.MessageQueue <- List.except [fact] agent.MessageQueue 
+        true
     else
-        printfn "%A not allowed to vote" mem.Name    
+        false    
 
-// get winner using wdm
-let winnerDetermination (inst:Holon) = 
-    match inst.WdMethod with
-    | Plurality -> 
-        let w = 
-            inst.Votelist
-            |> Seq.countBy id
-            |> Seq.maxBy snd
-            |> fst
-        inst.ClearVotes        
-        inst.RaMethod <- w         
+let isAgentInInst agent inst = 
+    match agent.RoleOf, inst.ID with
+    | Some (Member (sID)), i| Some (Head (sID)), i | Some (Monitor (sID)), i| Some (Gatekeeper (sID)), i -> sID = i
+    | _ -> false
 
+//************************* Principle 1 *********************************/
 
-// P3: TODO: Head should be declaring winner when issue is open
-// usind WDM
-let declareWinner (head:Holon) (inst:Holon) = 
-    if Some head = inst.Head && not inst.Issue then
-        winnerDetermination inst
+// apply agent inst -> Applied (agent, inst)
+let applyToInst agent inst = 
+    let applicationRes = 
+        match agent.RoleOf with
+        | None -> Some (Applied (agent.ID, inst.ID))
+        | Some _ -> None
+    sendMessage applicationRes inst    
+    //applicationRes 
+
+/// SIDE-EFFECT: inst.MessageQueue
+/// is gatekeep empowered to include agent into inst -> bool
+let powToInclude gatekeep agent inst = 
+    // Check against message queue
+    let facts = [Applied (agent.ID, inst.ID)]
+    let factCheck = List.fold (fun state f -> state && checkAndRemoveFromQ inst f) true facts
+    
+    // Check others
+    let checkCritLst = [factCheck ; (gatekeep.RoleOf = Some (Gatekeeper(inst.ID)))]     
+    not (List.contains false checkCritLst) 
+             
+      
+/// SIDE-EFFECT: agent.RoleOf
+/// gatekeep includes agent into inst 
+let includeToInst gatekeep agent inst = 
+    if powToInclude gatekeep agent inst then 
+        agent.RoleOf <- Some (Member(inst.ID))
+        printfn "%s has included %s as a member of %s" gatekeep.Name agent.Name inst.Name
     else
-        printfn "Issue is not yet closed"
-    
-        
-
-
-
-
-// Platform helper functions    
-/// name: name of supraholon
-/// memberLst: initial members
-/// membershipCrit: limit on number of members
-let createInstitution (name:string) memberLst membershipCrit = 
-    let inst = Holon(name)
-    inst.Members <- memberLst
-    List.map (fun (h:Holon) -> h.JoinHolon inst) memberLst |> ignore
-
-    inst.Head <- (Some (List.item 0 memberLst))
-    inst.Gatekeeper <- (Some (List.item 1 memberLst))
-    
-    // Principle 1: Membership criteria
-    inst.MembershipLimit <- membershipCrit
-
-    // Principle 2: Congruence
-    inst.Resources <- 100
-
-    inst
+        printfn "%s has decided to not include %s as a member of %s" gatekeep.Name agent.Name inst.Name
     
 
+//************************* Principle 2 *********************************/
 
+let powToDemand agent inst step = 
+    let a = agent.ID
+    let i = inst.ID
+    let hasAgentDemanded = 
+        let rec checkQ q = 
+            match q with
+            | Demanded (aID, _, iID)::_ -> (a = aID) && (i = iID)
+            | _::rest -> checkQ rest
+            | [] -> false
+        checkQ inst.MessageQueue        
+    let checkCritLst = [isAgentInInst agent inst ; agent.SanctionLevel = 0; not hasAgentDemanded]
+    not (List.contains false checkCritLst)
 
-
-
+let demandResources agent r inst = 
+    // TODO: time step
+    if powToDemand agent inst 0 then 
+        inst.MessageQueue <- inst.MessageQueue @ [Demanded (agent.ID, r, inst.ID)]
+        Some (Demanded (agent.ID, r, inst.ID))
+    else
+        None 
