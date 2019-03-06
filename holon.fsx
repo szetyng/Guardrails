@@ -8,7 +8,8 @@ type RoleIn =
     | Monitor of HolonID
 
 type MessageType = 
-    | Applied of HolonID * HolonID
+    | Applied of HolonID * HolonID          // Applied(Agent, Inst)
+    | Demanded of HolonID * int * HolonID   // Demanded(Agent, Resources, Inst)
 
 type Holon =
     { 
@@ -18,24 +19,16 @@ type Holon =
         mutable RoleOf : RoleIn option;
         mutable SanctionLevel : int;
         mutable OffenceLevel : int;
-        // msg queue member
         mutable MessageQueue : MessageType list
     }
 
-type Mailman() = 
-    // something
-    static let addToQ oldQ msg = oldQ @ [msg]
+// Supra-institution might not have roles?
+type Institution = 
+    {
+        Self: Holon;
+        Head: Holon;
+        Gatekeeper: Holon;
+        //Monitor: Holon
+    }
 
-    static let inbox = MailboxProcessor.Start(fun inbox ->
-        let rec loop q = async {
-            let! msg = inbox.Receive()
-            match msg with
-            | Applied (a,i) -> 
-                // do something
-                let newState = addToQ q msg 
-                return! loop newState
-        }
-        loop []
-    )
 
-    static member Send m = inbox.Post m
