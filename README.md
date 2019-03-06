@@ -43,7 +43,6 @@ TODO: exclude members, after implementing sanctions part
 
 `powToAllocate head inst agent r raMethod` -> `bool`
 - returns `true` if
-  - 
 
 Agent `A` is empowered to 
 - `Demand` R amount of resources from a supra-holon if `A` is a member of the supra-holon and has not demanded anything in this time slice (?) and it has not received any sanctions
