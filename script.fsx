@@ -9,10 +9,15 @@ let def =
         ID = 0;   
         Name = " ";
         Resources = 0;
+        MessageQueue = [];
         RoleOf = None;
+        CompliancyDegree = 1.0;
         SanctionLevel = 0;
         OffenceLevel = 0;
-        MessageQueue = []
+        RaMethod = None;
+        WdMethod = None;
+        MonitoringFreq = 0.5;
+        MonitoringCost = 10;
     }
 let agentNames = 
     [
@@ -28,7 +33,7 @@ let initAgents nameLst currID =
     List.map2 createAgent nameLst [currID..sz+currID-1]
 
 let initParksAgents = 
-    let parks = {createAgent "parks" 0 with Resources=100}
+    let parks = {createAgent "parks" 0 with Resources=100; RaMethod=Some Queue; WdMethod=Some Plurality}
     let ron = {createAgent "ron" 1 with RoleOf=Some (Head(parks.ID))}
     let leslie = {createAgent "leslie" 2 with RoleOf=Some (Gatekeeper(parks.ID))}
     [parks ; ron ; leslie]

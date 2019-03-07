@@ -5,13 +5,18 @@ open Platform
 
 let def = 
     {     
-        ID = -1;   
+        ID = 0;   
         Name = " ";
         Resources = 0;
+        MessageQueue = [];
         RoleOf = None;
+        CompliancyDegree = 1.0;
         SanctionLevel = 0;
         OffenceLevel = 0;
-        MessageQueue = []
+        RaMethod = None;
+        WdMethod = None;
+        MonitoringFreq = 0.5;
+        MonitoringCost = 10;
     }
 
 let parks = {def with ID=0; Name="parks"; Resources=100}
