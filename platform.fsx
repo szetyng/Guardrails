@@ -3,16 +3,18 @@ open Holon
 
 //********************** Helper functions *******************************/
 let sendMessage msg recipient = 
-    let msgQ = recipient.MessageQueue
+    // let msgQ = recipient.MessageQueue
     match msg with
     | Some m -> 
-        recipient.MessageQueue <- msgQ @ [m]
+        recipient.MessageQueue <- recipient.MessageQueue @ [m]
         printfn "%s has received message %A" recipient.Name m 
     | None -> printfn "No message to be sent to %s" recipient.Name
 
 /// get holonID of last agent in list of Agents
 let getLatestId agents = 
-    List.last agents
+    agents
+    |> List.sortBy (fun a -> a.ID) 
+    |> List.last 
     |> fun a -> a.ID 
 
 /// check if Agent occupies Role
