@@ -1,3 +1,4 @@
+open System.Collections.Generic
 #load "holon.fsx"
 open Holon
 
@@ -59,6 +60,7 @@ let checkFromQ agent fact toRemove =
     match (List.contains fact agent.MessageQueue), toRemove with
     | true, true -> 
         agent.MessageQueue <- List.except [fact] agent.MessageQueue 
+        printfn "%A has been removed from %s inbox" fact agent.Name 
         true
     | true, false -> true
     | false, _ -> false    
@@ -126,3 +128,33 @@ let demandResources agent r inst =
         | true -> Some (Demanded (agent.ID, r, inst.ID))
         | false -> None
     sendMessage demandRes inst
+
+let powToAllocate head inst agent r =
+    let a = agent.ID
+    let i = inst.ID
+    let demandLst = 
+        let rec getDemands q dLst= 
+            match q with
+            | Demanded(ag,x,ins)::rest -> getDemands rest (dLst @ [Demanded(ag,x,ins)])
+            | _::rest -> getDemands rest dLst
+            | [] -> dLst
+        getDemands inst.MessageQueue [] 
+    if head.RoleOf = Some (Head(inst.ID)) then
+        match inst.RaMethod, demandLst with
+        | Some Queue, Demanded(aID, r, iID)::_ -> 
+            if aID=a && iID=i then 
+                checkFromQ inst (Demanded(aID, r, iID)) true |> ignore
+                if r<=inst.Resources then r
+                else if r>inst.Resources then inst.Resources
+                else 0
+            else 0
+        | Some (Ration (rPrime)), Demanded(aID, r, iID)::_ ->
+            if aID=a && iID=i then
+                checkFromQ inst (Demanded(aID, r, iID)) true |> ignore
+                if r<=rPrime && r<=inst.Resources then r
+                else if r>rPrime && rPrime<=inst.Resources then rPrime
+                else if r>rPrime && rPrime>inst.Resources then inst.Resources 
+                else 0
+            else 0
+        | _ , _ -> 0     
+    else 0       

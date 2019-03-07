@@ -10,7 +10,7 @@ type RoleIn =
 
 type ResAllocMethod = 
     | Queue
-    | Ration
+    | Ration of int
 
 type WinDetMethod = 
     | Plurality 

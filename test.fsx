@@ -19,19 +19,32 @@ let def =
         MonitoringCost = 10;
     }
 
-let parks = {def with ID=0; Name="parks"; Resources=100}
+let parks = {def with ID=0; Name="parks"; Resources=100; RaMethod=Some (Ration(10))}
 let ron = {def with ID=1; Name="ron"; RoleOf=Some (Head(parks.ID))}
 let leslie = {def with ID=2; Name="leslie"; RoleOf=Some(Gatekeeper(parks.ID))}
-let tom = {def with ID=3; Name="tom"}
-let april = {def with ID=4; Name="april"}
+let tom = {def with ID=3; Name="tom"; RoleOf=Some(Member(parks.ID))}
+let april = {def with ID=4; Name="april"; RoleOf=Some(Member(parks.ID))}
 let donna = {def with ID=5; Name="donna"}
 let jerry = {def with ID=6; Name="jerry"}
 
-let testGetLatestID =
+let testGetLatestID() =
     let agentsUnsorted = [parks ; leslie ; tom ; jerry ; april ; donna ; ron]
     let i = getLatestId agentsUnsorted
     i = 6
 
+let testDemandResources() = 
+    demandResources tom 20 parks
+    demandResources tom 5 parks
 
-// Tests
-testGetLatestID
+let testPowToAllocate() = 
+    demandResources tom 20 parks
+    demandResources april 40 parks
+    let tomGets = powToAllocate ron parks tom 40
+    printfn "tom gets %i" tomGets
+
+
+// Tests, make them functions so that they are only called here
+testGetLatestID()
+testDemandResources()
+testPowToAllocate()
+

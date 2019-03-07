@@ -1,7 +1,7 @@
 # Guardrails
 
 ## Todo
-
+- PRINT ALL SIDE-EFFECTS AS THEY HAPPEN
 
 ## Principle-related functions
 Pure functions will take in inputs and return an output, with no side effects on the rest of the environment. However, the following functions will have side effects when it comes to things like changing the properties of agents and sending messages, which now that I think about it, shouldn't be a side effect?  
@@ -41,18 +41,21 @@ TODO: exclude members, after implementing sanctions part
   - `agent` sanction level is 0
 
 **FROM HERE ONWARDS, HAS NOT BEEN DONE**  
-`powToAllocate head inst agent r raMethod` -> `bool`
+`powToAllocate head inst agent r` -> `int` (amount of resources allocated)
+- side-effect: remove demand from message queue
+- `raMethod = inst.RaMethod`
 - returns `true` if
   - `agent` has made a demand of `r` to `inst`
   - `head` occupies role of head in `inst`
-  - case: `raMethod` = `queue` and if
+  - case: get `r` if `raMethod` = `queue` and if
     - the demand is at the head of the demand queue
+    - if `r` <= amount of resources we have
     - `inst.RaMethod` is `queue`
   - case: `raMethod` is `ration` and if
     - the demand is that the head of the demand queue
     - `inst.RaMethod` is `ration`
-    - if demand `r` is more than ration -> get ration (TODO: side-effect?)
-    - if demand `r` is less than or equal to ration -> get demand
+    - if demand `r` is more than ration -> get ration 
+    - if demand `r` is less than or equal to ration -> get demand `r`
 
 
 
@@ -78,4 +81,4 @@ A list of all the holonic agents are passed to the `simulate` function. In the b
 
 Thus, `supraHolons = [offices ; parks ; brooklyn]`. `offices.RoleOf = None`, while `parks` and `brooklyn` would have `RoleOf = Some (Member (offices))`.  
 
-Want to go through each agent and see what they want to do.
+Want to go through each agent and see what they want to do. This will have a lot to do with agent behaviour, compliancy, level of resources (if they poor, utility of cheating becomes higher etc). 
