@@ -2,8 +2,8 @@
 open Holon
 
 //********************** Helper functions *******************************/
+/// add Msg to Recipient.MessageQueue
 let sendMessage msg recipient = 
-    // let msgQ = recipient.MessageQueue
     match msg with
     | Some m -> 
         recipient.MessageQueue <- recipient.MessageQueue @ [m]
@@ -55,12 +55,13 @@ let findApplicants inst =
 
 
 /// SIDE-EFFECT: agent.MessageQueue
-let checkAndRemoveFromQ agent fact = 
-    if List.contains fact agent.MessageQueue then 
+let checkFromQ agent fact toRemove = 
+    match (List.contains fact agent.MessageQueue), toRemove with
+    | true, true -> 
         agent.MessageQueue <- List.except [fact] agent.MessageQueue 
         true
-    else
-        false    
+    | true, false -> true
+    | false, _ -> false    
 
 let isAgentInInst agent inst = 
     match agent.RoleOf, inst.ID with
@@ -68,8 +69,7 @@ let isAgentInInst agent inst =
     | _ -> false
 
 //************************* Principle 1 *********************************/
-
-// apply agent inst -> Applied (agent, inst)
+/// Sends message from agent to inst
 let applyToInst agent inst = 
     let applicationRes = 
         match agent.RoleOf with
@@ -83,7 +83,8 @@ let applyToInst agent inst =
 let powToInclude gatekeep agent inst = 
     // Check against message queue
     let facts = [Applied (agent.ID, inst.ID)]
-    let factCheck = List.fold (fun state f -> state && checkAndRemoveFromQ inst f) true facts
+    // TODO: don't remove the fact yet... maybe not all of it was TRUE
+    let factCheck = List.fold (fun state f -> state && checkFromQ inst f true) true facts
     
     // Check others
     let checkCritLst = [factCheck ; (gatekeep.RoleOf = Some (Gatekeeper(inst.ID)))]     
@@ -105,10 +106,13 @@ let includeToInst gatekeep agent inst =
 let powToDemand agent inst step = 
     let a = agent.ID
     let i = inst.ID
+    // List.contains is not good enough due to anonymous variable r in the message
     let hasAgentDemanded = 
         let rec checkQ q = 
             match q with
-            | Demanded (aID, _, iID)::_ -> (a = aID) && (i = iID)
+            | Demanded (aID, _, iID)::rest -> 
+                if (a = aID) && (i = iID) then true
+                else checkQ rest         
             | _::rest -> checkQ rest
             | [] -> false
         checkQ inst.MessageQueue        
@@ -116,9 +120,9 @@ let powToDemand agent inst step =
     not (List.contains false checkCritLst)
 
 let demandResources agent r inst = 
+    let demandRes = 
     // TODO: time step
-    if powToDemand agent inst 0 then 
-        inst.MessageQueue <- inst.MessageQueue @ [Demanded (agent.ID, r, inst.ID)]
-        Some (Demanded (agent.ID, r, inst.ID))
-    else
-        None 
+        match powToDemand agent inst 0 with
+        | true -> Some (Demanded (agent.ID, r, inst.ID))
+        | false -> None
+    sendMessage demandRes inst

@@ -9,8 +9,7 @@ Pure functions will take in inputs and return an output, with no side effects on
 TODO: remove sending messages as a side-effect and make it a thing in the simulation instead (benefit: easier to keep track of when there are less side-effects). Or maybe not? Do things that make sense from the function name's POV, e.g.: assume `applyToInst` WILL send the message `Applied`, rather than just returning the message type without doing anything with it. Include in comment/documentation when functions send messages like so.
 
 ### Principle 1: Clearly defined boundaries
-`applyToInst agent inst` -> `MessageType option`
-- if successful, output is `Some Applied(A)`
+`applyToInst agent inst`
 - will be successful if:
   - `agent` does not already occupy a role in `inst`
   - `agent` qualifies to be a member of `inst` (not implemented)
@@ -26,13 +25,12 @@ TODO: remove sending messages as a side-effect and make it a thing in the simula
   - there is a message in the `inst.MessageQueue` corresponding to `agent`'s application for membership
   - `gatekeep` occupies the role of gatekeeper in `inst`
   - `agent` has been approved as a member (not implemented)  
-- side-effect: removes `Applied` from `inst.MessageQueue` if it exists
+- side-effect: removes `Applied` from `inst.MessageQueue` if it exists. Easily changed to not remove the message if need be.
 
 TODO: exclude members, after implementing sanctions part
 
 ### Principle 2: Congruence
-TODO: remove the output, side-effect only
-`demandResources agent r inst` -> `MessageType option`
+`demandResources agent r inst` 
 - will be successful if `agent` is **empowered** to demand for resources from `inst`
 - side-effect: `inst.MessageQueue` receives `Demanded(A, R, I)`
 
@@ -62,4 +60,22 @@ TODO: remove the output, side-effect only
 Agent `A` is empowered to vote on issue M if the issue is open and A is a member of the institution. This adds A's vote to the votelist. The head is obligated to declare a winner of the vote using whatever `WinnerDeterminationMethod` is being employed, when the issue is closed.
 
 ## Physical abilities of agents
+### Initialisation
 Initially, every holon has 0 resources, except for the supra-holon, which has 100. The amount changes when the member holon appropriates resources from the supra-holon, using `appropriateResources agent r inst` which has the previously mentioned side-effects.
+
+### Simulation
+A list of all the holonic agents are passed to the `simulate` function. In the beginning, a list of `supraHolons` are identified from the list of holons. In this project, there will be 3 `supraHolons` with the following hierarchy:
+```
+                offices
+               /       \
+            parks     brooklyn
+              |          |
+        Head=ron        Head=ray
+        Gate=leslie     Gate=terry
+        Monitor=ben     Monitor=amy
+        Other members   Other members
+```
+
+Thus, `supraHolons = [offices ; parks ; brooklyn]`. `offices.RoleOf = None`, while `parks` and `brooklyn` would have `RoleOf = Some (Member (offices))`.  
+
+Want to go through each agent and see what they want to do.

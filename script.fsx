@@ -19,11 +19,19 @@ let def =
         MonitoringFreq = 0.5;
         MonitoringCost = 10;
     }
+
+let parksNames = 
+    [
+        "tom"; "april"; "donna" ; "jerry"; "ben"; "andy" ; "chris"; "mark"; "ann"; "jeremy"
+    ]
+let brooklynNames = 
+    [
+        "amy"; "jake"; "rosa"; "charles"; "michael"; "norm"; "kevin"; "adrian"; "madeline"; "gina"
+    ]
+
 let agentNames = 
     [
-        "tom"; "april"; "donna"; "jerry"; "amy"; "rosa"; "terry";
-        "ben"; "mark" ; "andy"; "chris"; "ann"; "jeremy"; "jennifer"; "eleanor";
-        "michael"; "tahani"; "jason"; "janet"; "gen"; "derek"; "chidi"
+        "eleanor"; "tahani"; "jason"; "janet"; "gen"; "derek"; "chidi"; "vicky"; "shawn"; "trevor"
     ]
 
 let createAgent name id = {def with Name=name; ID=id}
@@ -32,15 +40,25 @@ let initAgents nameLst currID =
     let sz = List.length nameLst
     List.map2 createAgent nameLst [currID..sz+currID-1]
 
-let initParksAgents = 
-    let parks = {createAgent "parks" 0 with Resources=100; RaMethod=Some Queue; WdMethod=Some Plurality}
-    let ron = {createAgent "ron" 1 with RoleOf=Some (Head(parks.ID))}
-    let leslie = {createAgent "leslie" 2 with RoleOf=Some (Gatekeeper(parks.ID))}
+let initParksPositions = 
+    let parks = {createAgent "parks" 1 with Resources=100; RaMethod=Some Queue; WdMethod=Some Plurality}
+    let ron = {createAgent "ron" 2 with RoleOf=Some (Head(parks.ID))}
+    let leslie = {createAgent "leslie" 3 with RoleOf=Some (Gatekeeper(parks.ID))}
     [parks ; ron ; leslie]
 
-let parksAgents = initParksAgents
-let otherAgents = initAgents agentNames ((getLatestId parksAgents) + 1)
-let allAgents = parksAgents @ otherAgents
+let initBrooklynPositions = 
+    let brooklyn = {createAgent "brooklyn" 4 with Resources=100; RaMethod=Some Ration; WdMethod=Some Plurality}
+    let ray = {createAgent "ray" 5 with RoleOf=Some (Head(brooklyn.ID))}
+    let terry = {createAgent "terry" 6 with RoleOf=Some (Gatekeeper(brooklyn.ID))}
+    [brooklyn ; ray ; terry]
+
+let offices = {createAgent "offices" 0 with Resources=100}
+let initHier = [offices] @ initParksPositions @ initBrooklynPositions
+
+let initParks = initAgents parksNames ((getLatestId initHier) + 1)
+let initBrooklyn = initAgents brooklynNames ((getLatestId initParks) + 1)
+let otherAgents = initAgents agentNames ((getLatestId initBrooklyn) + 1)
+let allAgents = initHier @ initParks @ initBrooklyn @ otherAgents
 
 
 let simulate agents timestep =
@@ -57,27 +75,21 @@ let simulate agents timestep =
     List.map (fun x -> printfn "Gatekeepers are %s" x.Name) gatekeepers |> ignore 
     // let monitors = List.filter (fun m -> checkRole m "Monitor") agents
     // List.map (fun x -> printfn "Monitors are %s" x.Name) monitors |> ignore 
+    let baseHolons = List.except supraHolons agents 
 
-    // TODO: what to do with supra institution?
-    let getRoles inst = 
-        let gatekeeper = List.find (fun g -> g.RoleOf = Some(Gatekeeper (inst.ID))) gatekeepers 
-        let head = List.find (fun h -> h.RoleOf = Some(Head (inst.ID))) heads 
-        //let monitor = List.find (fun m -> m.RoleOf = Some(Monitor (inst.ID))) monitors
-        {Self = inst; Head = head; Gatekeeper = gatekeeper} //; Monitor = monitor}
 
-    let includeMembers inst = 
-        let applicantIDLst = findApplicants inst.Self
-        let applicants = 
-            applicantIDLst
-            |> List.map (getHolon agents)
-            |> List.choose id
-        printfn "including members"        
-        applicants
-        |> List.map (fun a -> includeToInst inst.Gatekeeper a inst.Self)      
+    // let includeMembers inst = 
+    //     let applicantIDLst = findApplicants inst.Self
+    //     let applicants = 
+    //         applicantIDLst
+    //         |> List.map (getHolon agents)
+    //         |> List.choose id
+    //     printfn "including members"        
+    //     applicants
+    //     |> List.map (fun a -> includeToInst inst.Gatekeeper a inst.Self)      
     
     supraHolons 
-    |> List.map getRoles 
-    |> List.map includeMembers
+
  
 
 let x = List.last allAgents

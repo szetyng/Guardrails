@@ -40,13 +40,6 @@ type Holon =
         mutable MonitoringCost : int
     }
 
-// Supra-institution might not have roles?
-type Institution = 
-    {
-        Self: Holon;
-        Head: Holon;
-        Gatekeeper: Holon;
-        //Monitor: Holon
-    }
+
 
 
