@@ -18,6 +18,7 @@ let def =
         WdMethod = None;
         MonitoringFreq = 0.5;
         MonitoringCost = 10;
+        IssueRaMethStatus = false
     }
 
 let parksNames = 

@@ -158,3 +158,90 @@ let powToAllocate head inst agent r =
             else 0
         | _ , _ -> 0     
     else 0       
+
+
+//************************* Principle 3 *********************************/
+let powToVote agent inst issue = 
+    let a = agent.ID
+    let hasAgentVoted = 
+        let rec checkQ q =
+            match issue, q with
+            | IssueRaMeth, VotedRaMeth(aID)::rest -> 
+                if aID=a then true
+                else checkQ rest
+            | IssueRaMeth, _::rest -> checkQ rest
+            | _, [] -> false
+            | _ -> 
+                printfn "Calling an improper issue to be voted on :("
+                false
+        checkQ inst.MessageQueue         
+    let isIssueOpen = 
+        match issue with
+        | IssueRaMeth -> inst.IssueRaMethStatus
+        | _ -> 
+            printfn "%A is not a valid issue to be voted on" issue 
+            false // issue is not open  
+
+    let checkCritLst = [isAgentInInst agent inst ; not hasAgentVoted ; isIssueOpen]
+    not (List.contains false checkCritLst) 
+
+let doVote agent inst issue vote = 
+    let voteRes = 
+        match issue, (powToVote agent inst issue) with
+        | IssueRaMeth, true -> 
+            sendMessage (Some (VotedRaMeth(agent.ID))) inst
+            Some (Vote(vote, inst.ID))
+        | IssueRaMeth, false -> 
+            printfn "%s cannot vote on issue %A" agent.Name issue
+            None
+        | _ -> 
+            printfn "What are you voting on?"
+            None
+    sendMessage voteRes inst    
+
+let powToDeclare head inst issue = 
+    let isIssueClosed =
+        match issue with
+        | IssueRaMeth -> not inst.IssueRaMethStatus
+        | _ -> 
+            printfn "%A is not an issue to be voted on" issue
+            true // issue is closed
+    let checkCritLst = [head.RoleOf = Some(Head(inst.ID)) ; isIssueClosed]
+    not (List.contains false checkCritLst)
+
+let countVotesPlurality votelist = 
+    votelist
+    |> Seq.countBy id
+    |> Seq.maxBy snd
+    |> fst
+ 
+let declareWinner head inst issue = 
+    if powToDeclare head inst issue then
+        let i = inst.ID
+        let votelist = 
+            let rec getVotes q vLst = 
+                match issue, q with
+                | IssueRaMeth, Vote (RaMeth(ra), iID)::rest -> 
+                    if iID=i then 
+                        checkFromQ inst (Vote (RaMeth(ra), iID)) true |> ignore
+                        getVotes rest (vLst @ [Vote (RaMeth(ra), i)])
+                    else getVotes rest vLst
+                | _, _::rest -> getVotes rest vLst
+                | _, [] -> vLst
+            getVotes inst.MessageQueue []
+        let winner =         
+            match inst.WdMethod with
+            | Some Plurality -> Some (countVotesPlurality votelist)     
+            | _ -> 
+                printfn "Winner declaration method is %A, not usable" inst.WdMethod
+                None
+        match issue, winner with
+        | IssueRaMeth, Some (Vote(RaMeth(ra), _) ) -> 
+            printfn "%s has changed %A in %s to %A" head.Name issue inst.Name ra            
+            inst.RaMethod <- Some ra                   
+        | _ -> printfn "Not a valid issue"    
+    else 
+        printfn "%s has decided not to declare winner to issue %A in institution %s" head.Name issue inst.Name                 
+
+
+         

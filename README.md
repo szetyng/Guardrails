@@ -2,6 +2,14 @@
 
 ## Todo
 - PRINT ALL SIDE-EFFECTS AS THEY HAPPEN
+- implement principles p4-p6
+- implement functionds for the physical actions of an agent/institution
+  - appropriate resources
+  - refill resources etc
+- feedback stuff, propensity to cheat stuff, revise behaviour stuff -> parameters to the physical functions
+  - appropriation of resources takes in `r` amount of resources as an argument. Make this `r` decision here
+  - when resources dwindle, call vote on changing stuff
+- make a script only for initialisation of agents (makes it easier when you change stuff like record properties)
 
 ## Principle-related functions
 Pure functions will take in inputs and return an output, with no side effects on the rest of the environment. However, the following functions will have side effects when it comes to things like changing the properties of agents and sending messages, which now that I think about it, shouldn't be a side effect?  
@@ -40,7 +48,6 @@ TODO: exclude members, after implementing sanctions part
   - `agent` has not demanded from `inst` in this time slice
   - `agent` sanction level is 0
 
-**FROM HERE ONWARDS, HAS NOT BEEN DONE**  
 `powToAllocate head inst agent r` -> `int` (amount of resources allocated)
 - side-effect: remove demand from message queue
 - `raMethod = inst.RaMethod`
@@ -57,10 +64,36 @@ TODO: exclude members, after implementing sanctions part
     - if demand `r` is more than ration -> get ration 
     - if demand `r` is less than or equal to ration -> get demand `r`
 
-
-
 ### Principle 3: Collective Choice Arrangements
-Agent `A` is empowered to vote on issue M if the issue is open and A is a member of the institution. This adds A's vote to the votelist. The head is obligated to declare a winner of the vote using whatever `WinnerDeterminationMethod` is being employed, when the issue is closed.
+**TODO**
+- implement physical action to open and close issues
+
+**Notes**
+- `issue` and `vote` are all `MessageTypes` so that the functions can accept them as arguments; make new ones as neccessary.
+
+`powToVote agent inst issue` -> `bool`
+- returns `true` if 
+  - `agent` is a member of `inst`
+  - status of `issue` is open
+  - `agent` has not yet voted on `issue` in `inst`
+
+`doVote agent inst issue vote`
+- will succeed if
+  - `agent` has the power to vote on this `issue` in this `inst`
+- side-effect:
+  - sends two messages to `inst` that the vote has been added, and that `agent` has voted (privately, won't know what `agent`'s vote is)
+
+`declareWinner head inst issue` 
+- will succeed if
+  - `head` had the power to do so
+- side-effect:
+  - changes whatever `inst.issue` was to the winner using `inst`'s winner determination method. removes votes from message queue
+- currently only has `Plurality` as a winner determination method
+
+`powToDeclare head inst issue` -> `bool`
+- returns `true` if
+  - `issue` is closed
+  - `head` is head of `inst`
 
 ## Physical abilities of agents
 ### Initialisation
