@@ -67,9 +67,10 @@ TODO: exclude members, after implementing sanctions part
 ### Principle 3: Collective Choice Arrangements
 **TODO**
 - implement physical action to open and close issues
+- when voting on `Ration`, how to decide what amount to set as ration?
 
 **Notes**
-- `issue` and `vote` are all `MessageTypes` so that the functions can accept them as arguments; make new ones as neccessary.
+- there's only one type of issue regarding resource allocation methods. Assuming only allowed to vote on this one type of issue. Other types are not required for now.
 
 `powToVote agent inst issue` -> `bool`
 - returns `true` if 
@@ -94,6 +95,8 @@ TODO: exclude members, after implementing sanctions part
 - returns `true` if
   - `issue` is closed
   - `head` is head of `inst`
+
+### Principle 4: Monitoring
 
 ## Physical abilities of agents
 ### Initialisation

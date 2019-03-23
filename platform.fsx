@@ -59,6 +59,7 @@ let findApplicants inst =
 let checkFromQ agent fact toRemove = 
     match (List.contains fact agent.MessageQueue), toRemove with
     | true, true -> 
+        // TODO: Remove only FIRST occurence of fact (bad for voting otherwise)
         agent.MessageQueue <- List.except [fact] agent.MessageQueue 
         printfn "%A has been removed from %s inbox" fact agent.Name 
         true
@@ -148,7 +149,7 @@ let powToAllocate head inst agent r =
                 else if r>inst.Resources then inst.Resources
                 else 0
             else 0
-        | Some (Ration (rPrime)), Demanded(aID, r, iID)::_ ->
+        | Some (Ration (Some rPrime)), Demanded(aID, r, iID)::_ ->
             if aID=a && iID=i then
                 checkFromQ inst (Demanded(aID, r, iID)) true |> ignore
                 if r<=rPrime && r<=inst.Resources then r
@@ -161,52 +162,34 @@ let powToAllocate head inst agent r =
 
 
 //************************* Principle 3 *********************************/
-let powToVote agent inst issue = 
+let powToVote agent inst = 
     let a = agent.ID
     let hasAgentVoted = 
         let rec checkQ q =
-            match issue, q with
-            | IssueRaMeth, VotedRaMeth(aID)::rest -> 
+            match q with
+            | VotedRaMeth(aID)::rest -> 
                 if aID=a then true
                 else checkQ rest
-            | IssueRaMeth, _::rest -> checkQ rest
-            | _, [] -> false
-            | _ -> 
-                printfn "Calling an improper issue to be voted on :("
-                false
-        checkQ inst.MessageQueue         
-    let isIssueOpen = 
-        match issue with
-        | IssueRaMeth -> inst.IssueRaMethStatus
-        | _ -> 
-            printfn "%A is not a valid issue to be voted on" issue 
-            false // issue is not open  
+            | _::rest -> checkQ rest
+            | [] -> false
+        checkQ inst.MessageQueue           
 
-    let checkCritLst = [isAgentInInst agent inst ; not hasAgentVoted ; isIssueOpen]
+    let checkCritLst = [isAgentInInst agent inst ; not hasAgentVoted ; inst.IssueStatus]
     not (List.contains false checkCritLst) 
 
-let doVote agent inst issue vote = 
+let doVote agent inst vote = 
     let voteRes = 
-        match issue, (powToVote agent inst issue) with
-        | IssueRaMeth, true -> 
+        match (powToVote agent inst) with
+        | true -> 
             sendMessage (Some (VotedRaMeth(agent.ID))) inst
             Some (Vote(vote, inst.ID))
-        | IssueRaMeth, false -> 
-            printfn "%s cannot vote on issue %A" agent.Name issue
-            None
-        | _ -> 
-            printfn "What are you voting on?"
+        | false -> 
+            printfn "%s cannot vote on issue" agent.Name 
             None
     sendMessage voteRes inst    
 
-let powToDeclare head inst issue = 
-    let isIssueClosed =
-        match issue with
-        | IssueRaMeth -> not inst.IssueRaMethStatus
-        | _ -> 
-            printfn "%A is not an issue to be voted on" issue
-            true // issue is closed
-    let checkCritLst = [head.RoleOf = Some(Head(inst.ID)) ; isIssueClosed]
+let powToDeclare head inst = 
+    let checkCritLst = [head.RoleOf = Some(Head(inst.ID)) ; not inst.IssueStatus]
     not (List.contains false checkCritLst)
 
 let countVotesPlurality votelist = 
@@ -215,19 +198,19 @@ let countVotesPlurality votelist =
     |> Seq.maxBy snd
     |> fst
  
-let declareWinner head inst issue = 
-    if powToDeclare head inst issue then
+let declareWinner head inst = 
+    if powToDeclare head inst then
         let i = inst.ID
         let votelist = 
             let rec getVotes q vLst = 
-                match issue, q with
-                | IssueRaMeth, Vote (RaMeth(ra), iID)::rest -> 
+                match q with
+                | Vote (ra, iID)::rest -> 
                     if iID=i then 
-                        checkFromQ inst (Vote (RaMeth(ra), iID)) true |> ignore
-                        getVotes rest (vLst @ [Vote (RaMeth(ra), i)])
+                        checkFromQ inst (Vote (ra, iID)) true |> ignore
+                        getVotes rest (vLst @ [Vote (ra, i)])
                     else getVotes rest vLst
-                | _, _::rest -> getVotes rest vLst
-                | _, [] -> vLst
+                | _::rest -> getVotes rest vLst
+                | [] -> vLst
             getVotes inst.MessageQueue []
         let winner =         
             match inst.WdMethod with
@@ -235,13 +218,13 @@ let declareWinner head inst issue =
             | _ -> 
                 printfn "Winner declaration method is %A, not usable" inst.WdMethod
                 None
-        match issue, winner with
-        | IssueRaMeth, Some (Vote(RaMeth(ra), _) ) -> 
-            printfn "%s has changed %A in %s to %A" head.Name issue inst.Name ra            
+        match winner with
+        | Some (Vote(ra, _) ) -> 
+            printfn "%s has changed raMethod in %s to %A" head.Name inst.Name ra            
             inst.RaMethod <- Some ra                   
         | _ -> printfn "Not a valid issue"    
     else 
-        printfn "%s has decided not to declare winner to issue %A in institution %s" head.Name issue inst.Name                 
+        printfn "%s has decided not to declare winner to raMethod issue in institution %s" head.Name inst.Name                 
 
 
          

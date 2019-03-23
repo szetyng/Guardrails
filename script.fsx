@@ -18,7 +18,7 @@ let def =
         WdMethod = None;
         MonitoringFreq = 0.5;
         MonitoringCost = 10;
-        IssueRaMethStatus = false
+        IssueStatus = false
     }
 
 let parksNames = 
@@ -48,7 +48,7 @@ let initParksPositions =
     [parks ; ron ; leslie]
 
 let initBrooklynPositions = 
-    let brooklyn = {createAgent "brooklyn" 4 with Resources=100; RaMethod=Some (Ration(20)); WdMethod=Some Plurality}
+    let brooklyn = {createAgent "brooklyn" 4 with Resources=100; RaMethod=Some (Ration(Some 20)); WdMethod=Some Plurality}
     let ray = {createAgent "ray" 5 with RoleOf=Some (Head(brooklyn.ID))}
     let terry = {createAgent "terry" 6 with RoleOf=Some (Gatekeeper(brooklyn.ID))}
     [brooklyn ; ray ; terry]

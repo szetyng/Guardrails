@@ -1,3 +1,4 @@
+open System.Collections.Generic
 #load "holon.fsx"
 #load "platform.fsx"
 open Holon
@@ -17,10 +18,10 @@ let def =
         WdMethod = None;
         MonitoringFreq = 0.5;
         MonitoringCost = 10;
-        IssueRaMethStatus = false
+        IssueStatus = false
     }
 
-let parks = {def with ID=0; Name="parks"; Resources=100; WdMethod = Some Plurality; RaMethod=Some (Ration(10))}
+let parks = {def with ID=0; Name="parks"; Resources=100; WdMethod = Some Plurality; RaMethod=Some (Ration(Some 10))}
 let ron = {def with ID=1; Name="ron"; RoleOf=Some (Head(parks.ID))}
 let leslie = {def with ID=2; Name="leslie"; RoleOf=Some(Gatekeeper(parks.ID))}
 let tom = {def with ID=3; Name="tom"; RoleOf=Some(Member(parks.ID))}
@@ -44,20 +45,20 @@ let testPowToAllocate() =
     printfn "tom gets %i" tomGets
 
 let testVoting() = 
-    doVote tom parks IssueRaMeth (RaMeth(Queue))
-    parks.IssueRaMethStatus <- true
-    doVote tom parks IssueRaMeth (RaMeth(Queue))
-    doVote april parks IssueRaMeth (RaMeth(Ration(20)))
-    doVote tom parks IssueRaMeth (RaMeth(Queue))
+    doVote tom parks Queue
+    parks.IssueStatus <- true
+    doVote tom parks Queue
+    doVote april parks (Ration(None))
+    doVote tom parks Queue
 
 let testDeclareWinner() = 
-    parks.IssueRaMethStatus <- true
-    doVote tom parks IssueRaMeth (RaMeth(Queue))
-    doVote april parks IssueRaMeth (RaMeth(Ration(20)))
-    doVote jerry parks IssueRaMeth (RaMeth(Queue))
-    doVote leslie parks IssueRaMeth (RaMeth(Ration(20)))
-    parks.IssueRaMethStatus <- false
-    declareWinner ron parks IssueRaMeth
+    parks.IssueStatus <- true
+    doVote tom parks Queue
+    doVote april parks (Ration(None))
+    doVote jerry parks Queue
+    doVote leslie parks (Ration(None))
+    parks.IssueStatus <- false
+    declareWinner ron parks 
 
 // Tests, make them functions so that they are only called here
 testGetLatestID()
