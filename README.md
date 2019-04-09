@@ -119,6 +119,20 @@ TODO: exclude members, after implementing sanctions part
   - `monitor` is monitor
   - `agent` is member
 
+### Principle 5: Graduated sanctions
+`reportGreed monitor agent inst`
+- side-effect: increments agent's offence level by 1
+- will succeed if:
+  - agent appropriates more than it has been allocated
+
+`sanctionMember head agent inst`
+- side-effect: changes agent's sanction level to its offence level
+- will succeed if:
+  - `head` has the power to sanction in this `inst`
+
+`powToSanction head inst` -> `bool`
+- return `true` if head is head of inst
+
 ## Physical abilities of agents
 ### Initialisation
 Initially, every holon has 0 resources, except for the supra-holon, which has 100. The amount changes when the member holon appropriates resources from the supra-holon, using `appropriateResources agent r inst` which has the previously mentioned side-effects.

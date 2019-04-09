@@ -29,6 +29,9 @@ let april = {def with ID=4; Name="april"; RoleOf=Some(Member(parks.ID))}
 let donna = {def with ID=5; Name="donna"}
 let jerry = {def with ID=6; Name="jerry"}
 
+let clearParksQueue() =
+    parks.MessageQueue <- []
+
 let testGetLatestID() =
     let agentsUnsorted = [parks ; leslie ; tom ; jerry ; april ; donna ; ron]
     let i = getLatestId agentsUnsorted
@@ -73,8 +76,27 @@ let testPowToReport() =
     assignMonitor ron april parks
     checkPower() 
 
+let testSanction() = 
+    assignMonitor ron april parks
+    let tomWants = 10
+    demandResources tom tomWants parks
+    let tomGets = powToAllocate ron parks tom tomWants
+
+    // allocate resources to tom
+    parks.MessageQueue <- parks.MessageQueue @ [Allocated(tom.ID,tomGets,parks.ID)]
+    printfn "tom gets %i" tomGets
+
+    // tom appropriates resources (without removing Allocated message)
+    parks.MessageQueue <- parks.MessageQueue @ [Appropriate(tom.ID,tomWants,parks.ID)]
+
+    // monitor and head do their jobs
+    reportGreed april tom parks 
+    sanctionMember ron tom parks
+
+
 
 // Tests, make them functions so that they are only called here
+clearParksQueue()
 testGetLatestID()
 testDemandResources()
 testPowToAllocate()
@@ -82,3 +104,4 @@ testVoting()
 parks
 testDeclareWinner()
 testPowToReport()
+testSanction()

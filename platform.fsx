@@ -244,5 +244,44 @@ let powToReport monitor agent inst =
 
 //************************* Principle 5 *********************************/
 let reportGreed monitor agent inst = 
-    if powToReport monitor agent inst then
-        
+    let a = agent.ID
+    let i = inst.ID
+    let allocatedR =     
+        let rec getAllocatedR lst = 
+            match lst with
+            | Allocated(mem,x,ins)::rest ->
+                if mem=a && ins=i then x
+                else getAllocatedR rest
+            | _::rest -> getAllocatedR rest
+            | [] -> 0
+        getAllocatedR inst.MessageQueue 
+    let appropriatedR =
+        let rec getAppropriatedR lst = 
+            match lst with
+            | Appropriate(mem,x,ins)::rest ->
+                if mem=a && ins=i then x
+                else getAppropriatedR rest
+            | _::rest -> getAppropriatedR rest
+            | [] -> 0
+        getAppropriatedR inst.MessageQueue
+    if appropriatedR>allocatedR && powToReport monitor agent inst then
+        agent.OffenceLevel <- agent.OffenceLevel + 1
+        printfn "Monitor %s reported member %s in institution %s; offence level increased to %i" monitor.Name agent.Name inst.Name agent.OffenceLevel
+    else
+        printfn "Monitor %s failed to report member %s in institution %s" monitor.Name agent.Name inst.Name
+
+let powToSanction head inst = 
+    head.RoleOf = Some (Head(inst.ID))
+
+let sanctionMember head agent inst =
+    let sancLvl = agent.OffenceLevel
+    if powToSanction head inst then
+        agent.SanctionLevel <- sancLvl
+        printfn "Head %s changed sanction level of %s in inst %s to %i" head.Name agent.Name inst.Name agent.SanctionLevel
+    else
+        printfn "Head %s failed to sanction member %s in inst %s" head.Name agent.Name inst.Name    
+
+
+
+
+
