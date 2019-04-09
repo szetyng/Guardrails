@@ -60,6 +60,20 @@ let testDeclareWinner() =
     parks.IssueStatus <- false
     declareWinner ron parks 
 
+let testPowToReport() = 
+    let checkPower() = 
+        let ans = powToReport april tom parks
+        match ans with
+        | true -> printfn "april has the power to report tom"
+        | false -> printfn "april does not have the power to report tom"
+
+    assignMonitor leslie april parks
+    checkPower()
+
+    assignMonitor ron april parks
+    checkPower() 
+
+
 // Tests, make them functions so that they are only called here
 testGetLatestID()
 testDemandResources()
@@ -67,3 +81,4 @@ testPowToAllocate()
 testVoting()
 parks
 testDeclareWinner()
+testPowToReport()

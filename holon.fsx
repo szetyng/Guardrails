@@ -18,7 +18,8 @@ type WinDetMethod =
 type MessageType = 
     | Applied of HolonID * HolonID              // Applied(Agent, Inst) TODO: is inst nec if it is being sent to inst?
     | Demanded of HolonID * int * HolonID       // Demanded(Agent, Resources, Inst)
-    | Vote of ResAllocMethod * HolonID                // VoteRaMeth(raMethod, Inst)          
+    | Allocated of HolonID * int * HolonID      // Allocated(Agent, Resources, Inst)
+    | Vote of ResAllocMethod * HolonID          // VoteRaMeth(raMethod, Inst)          
     | VotedRaMeth of HolonID                    // VotedRaMeth(Agent) 
 
 type Holon =

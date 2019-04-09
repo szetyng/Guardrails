@@ -226,5 +226,23 @@ let declareWinner head inst =
     else 
         printfn "%s has decided not to declare winner to raMethod issue in institution %s" head.Name inst.Name                 
 
+//************************* Principle 4 *********************************/
+let powToAssignMonitor head monitor inst = 
+    let checkCritLst = [head.RoleOf = Some (Head(inst.ID)) ; monitor.RoleOf = Some (Member(inst.ID))]
+    not (List.contains false checkCritLst)
 
-         
+let assignMonitor head monitor inst = 
+    if powToAssignMonitor head monitor inst then
+        printfn "%s has assigned %s as monitor of %s" head.Name monitor.Name inst.Name
+        monitor.RoleOf <- Some (Monitor inst.ID)
+    else
+        printfn "%s has failed to assign %s as monitor to %s" head.Name monitor.Name inst.Name     
+
+let powToReport monitor agent inst = 
+    let checkCritLst = [monitor.RoleOf = Some (Monitor(inst.ID)) ; agent.RoleOf = Some (Member(inst.ID))]
+    not (List.contains false checkCritLst)
+
+//************************* Principle 5 *********************************/
+let reportGreed monitor agent inst = 
+    if powToReport monitor agent inst then
+        

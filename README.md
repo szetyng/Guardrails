@@ -97,6 +97,27 @@ TODO: exclude members, after implementing sanctions part
   - `head` is head of `inst`
 
 ### Principle 4: Monitoring
+**Notes**
+- in the long axiomatization paper, monitor has two responsibilities: power to report misbehaving agent after observing appropriations, and obligation to report current level of resources in the inst (i.e. sample the state of the environment)
+- only implementing the former for now. A report of misappropriation can lead to a sanction (P5) and a dispute (P6)
+- as for the latter, the current level of resources can be used to change P2's resource allocation methods by using P3's voting methods.
+
+**TODO**
+- figure out how to do the third bullet point above in a simulation
+
+`powToAssignMonitor head monitor inst` -> `bool`
+- returns `true` if 
+  - `head` is head of inst
+  - `monitor` is *currently* a member of inst
+
+`assignMonitor head monitor inst`
+- side-effect: monitor's `RoleOf` becomes `Some Monitor`
+- will succeed if head has the power to assign monitor
+
+`powToReport monitor agent inst` -> `bool`
+- returns `true` is 
+  - `monitor` is monitor
+  - `agent` is member
 
 ## Physical abilities of agents
 ### Initialisation
