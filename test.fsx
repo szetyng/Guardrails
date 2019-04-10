@@ -89,7 +89,7 @@ let testSanction() =
     printfn "tom gets %i" tomGets
 
     // tom appropriates resources (without removing Allocated message)
-    parks.MessageQueue <- parks.MessageQueue @ [Appropriate(tom.ID,tomWants,parks.ID)]
+    parks.MessageQueue <- parks.MessageQueue @ [Appropriated(tom.ID,tomWants,parks.ID)]
 
     // monitor and head do their jobs
     reportGreed april tom parks 
@@ -106,7 +106,7 @@ let testUpholdSanctions() =
     printfn "tom gets %i" tomGets
 
     // tom appropriates resources (without removing Allocated message)
-    parks.MessageQueue <- parks.MessageQueue @ [Appropriate(tom.ID,tomWants,parks.ID)]
+    parks.MessageQueue <- parks.MessageQueue @ [Appropriated(tom.ID,tomWants,parks.ID)]
 
     // monitor and head do their jobs
     reportGreed april tom parks 
@@ -116,7 +116,25 @@ let testUpholdSanctions() =
     appealSanction tom 1 parks
     upholdAppeal ron tom 1 parks
 
+// april will fail because she is not first in queue
+let testPhysicalAppropriate() = 
+    demandResources tom 20 parks
+    demandResources april 10 parks
+    allocateResources ron parks april
+    allocateResources ron parks tom
+    appropriateResources tom parks 10
 
+let testRefill() = 
+    refillResources parks 50
+
+let testPhyDeclareWinner() = 
+    openIssue ron parks
+    doVote tom parks Queue
+    doVote april parks (Ration(None))
+    doVote jerry parks Queue
+    doVote leslie parks (Ration(None))
+    closeIssue ron parks
+    declareWinner ron parks
 
 // Tests, make them functions so that they are only called here
 clearParksQueue()
@@ -129,3 +147,7 @@ testDeclareWinner()
 testPowToReport()
 testSanction()
 testUpholdSanctions()
+testPhysicalAppropriate()
+testRefill()
+testPhyDeclareWinner()
+

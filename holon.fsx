@@ -21,7 +21,7 @@ type MessageType =
     | Allocated of HolonID * int * HolonID      // Allocated(Agent, Resources, Inst)
     | Vote of ResAllocMethod * HolonID          // VoteRaMeth(raMethod, Inst)          
     | VotedRaMeth of HolonID                    // VotedRaMeth(Agent) 
-    | Appropriate of HolonID * int * HolonID    // Appropriate(Agent, Resources, Inst)
+    | Appropriated of HolonID * int * HolonID    // Appropriate(Agent, Resources, Inst)
     | Appeal of HolonID * int * HolonID         // Appeal(Agent, SanctionLevel, Inst)
 
 type Holon =

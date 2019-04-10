@@ -53,14 +53,18 @@ let findApplicants inst =
         | _::rest -> getting rest lst
         | [] -> lst
     getting q applicants                
-
-
+    
 /// SIDE-EFFECT: agent.MessageQueue
+/// if toRemove, only removes first occurence of fact
 let checkFromQ agent fact toRemove = 
     match (List.contains fact agent.MessageQueue), toRemove with
     | true, true -> 
-        // TODO: Remove only FIRST occurence of fact (bad for voting otherwise)
-        agent.MessageQueue <- List.except [fact] agent.MessageQueue 
+        let rec removeFirstX lst x = 
+            match lst with
+            | h::rest when h=x -> rest // no recursion, won't remove other occurences
+            | h::rest -> h::(removeFirstX rest x)
+            | _ -> []
+        agent.MessageQueue <- removeFirstX agent.MessageQueue fact
         printfn "%A has been removed from %s inbox" fact agent.Name 
         true
     | true, false -> true
@@ -212,6 +216,7 @@ let declareWinner head inst =
                 | _::rest -> getVotes rest vLst
                 | [] -> vLst
             getVotes inst.MessageQueue []
+        printfn "votelist: %A" votelist        
         let winner =         
             match inst.WdMethod with
             | Some Plurality -> Some (countVotesPlurality votelist)     
@@ -258,7 +263,7 @@ let reportGreed monitor agent inst =
     let appropriatedR =
         let rec getAppropriatedR lst = 
             match lst with
-            | Appropriate(mem,x,ins)::rest ->
+            | Appropriated(mem,x,ins)::rest ->
                 if mem=a && ins=i then x
                 else getAppropriatedR rest
             | _::rest -> getAppropriatedR rest
