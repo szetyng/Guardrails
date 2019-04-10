@@ -130,7 +130,7 @@ let demandResources agent r inst =
         | false -> None
     sendMessage demandRes inst
 
-let powToAllocate head inst agent r =
+let powToAllocate head inst agent =
     let a = agent.ID
     let i = inst.ID
     let demandLst = 

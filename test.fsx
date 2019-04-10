@@ -1,8 +1,10 @@
 open System.Collections.Generic
 #load "holon.fsx"
 #load "platform.fsx"
+#load "physical.fsx"
 open Holon
 open Platform
+open Physical
 
 let def = 
     {     
@@ -44,8 +46,8 @@ let testDemandResources() =
 let testPowToAllocate() = 
     demandResources tom 20 parks
     demandResources april 40 parks
-    let tomGets = powToAllocate ron parks tom 40
-    printfn "tom gets %i" tomGets
+    allocateResources ron parks tom
+    allocateResources ron parks april
 
 let testVoting() = 
     doVote tom parks Queue
@@ -80,7 +82,7 @@ let testSanction() =
     assignMonitor ron april parks
     let tomWants = 10
     demandResources tom tomWants parks
-    let tomGets = powToAllocate ron parks tom tomWants
+    let tomGets = powToAllocate ron parks tom 
 
     // allocate resources to tom
     parks.MessageQueue <- parks.MessageQueue @ [Allocated(tom.ID,tomGets,parks.ID)]
@@ -97,7 +99,7 @@ let testUpholdSanctions() =
     assignMonitor ron april parks
     let tomWants = 20
     demandResources tom tomWants parks
-    let tomGets = powToAllocate ron parks tom tomWants
+    let tomGets = powToAllocate ron parks tom 
 
     // allocate resources to tom
     parks.MessageQueue <- parks.MessageQueue @ [Allocated(tom.ID,tomGets,parks.ID)]
