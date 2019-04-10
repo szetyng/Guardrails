@@ -281,6 +281,30 @@ let sanctionMember head agent inst =
     else
         printfn "Head %s failed to sanction member %s in inst %s" head.Name agent.Name inst.Name    
 
+//************************* Principle 6 *********************************/
+let powToAppeal agent s inst = 
+    let checkCritLst = [agent.RoleOf = Some (Member inst.ID); agent.SanctionLevel = s]
+    not (List.contains false checkCritLst)
+
+let appealSanction agent s inst = 
+    let appealRes = 
+        match powToAppeal agent s inst with
+        | true -> Some (Appeal(agent.ID,s,inst.ID))
+        | false -> None
+    sendMessage appealRes inst    
+
+let powToUphold head agent s inst = 
+    let checkCritLst = [head.RoleOf = Some (Head inst.ID); checkFromQ inst (Appeal(agent.ID,s,inst.ID)) true]
+    not (List.contains false checkCritLst)
+
+let upholdAppeal head agent s inst =
+    if powToUphold head agent s inst then
+        agent.SanctionLevel <- agent.SanctionLevel - 1
+        printfn "head %s has decremented the sanctions of member %s in inst %s to %i" head.Name agent.Name inst.Name agent.SanctionLevel
+    else
+        printfn "head %s has decided not to uphold appeal of member %s in inst %s" head.Name agent.Name inst.Name
+        
+
 
 
 

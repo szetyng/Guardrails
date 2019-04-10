@@ -93,6 +93,27 @@ let testSanction() =
     reportGreed april tom parks 
     sanctionMember ron tom parks
 
+let testUpholdSanctions() = 
+    assignMonitor ron april parks
+    let tomWants = 20
+    demandResources tom tomWants parks
+    let tomGets = powToAllocate ron parks tom tomWants
+
+    // allocate resources to tom
+    parks.MessageQueue <- parks.MessageQueue @ [Allocated(tom.ID,tomGets,parks.ID)]
+    printfn "tom gets %i" tomGets
+
+    // tom appropriates resources (without removing Allocated message)
+    parks.MessageQueue <- parks.MessageQueue @ [Appropriate(tom.ID,tomWants,parks.ID)]
+
+    // monitor and head do their jobs
+    reportGreed april tom parks 
+    sanctionMember ron tom parks
+
+    // tom appeals
+    appealSanction tom 1 parks
+    upholdAppeal ron tom 1 parks
+
 
 
 // Tests, make them functions so that they are only called here
@@ -105,3 +126,4 @@ parks
 testDeclareWinner()
 testPowToReport()
 testSanction()
+testUpholdSanctions()

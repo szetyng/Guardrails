@@ -1,15 +1,17 @@
 # Guardrails
 
 ## Todo
-- PRINT ALL SIDE-EFFECTS AS THEY HAPPEN
-- implement principles p4-p6
-- implement functionds for the physical actions of an agent/institution
+- implement functions for the physical actions of an agent/institution
   - appropriate resources
   - refill resources etc
 - feedback stuff, propensity to cheat stuff, revise behaviour stuff -> parameters to the physical functions
   - appropriation of resources takes in `r` amount of resources as an argument. Make this `r` decision here
   - when resources dwindle, call vote on changing stuff
 - make a script only for initialisation of agents (makes it easier when you change stuff like record properties)
+
+## Notes
+- for some of the principles, work out if 'agent has to be a member of the institution' means `agent.RoleOf = Member` or as long as agent holds is in the institution, whether as Member, Monitor, Gatekeepr or Head.
+- go through all functions and reevaluate where to remove messages from message queue and where not to - make a note in README.md and in comments if messages are removed
 
 ## Principle-related functions
 Pure functions will take in inputs and return an output, with no side effects on the rest of the environment. However, the following functions will have side effects when it comes to things like changing the properties of agents and sending messages, which now that I think about it, shouldn't be a side effect?  
@@ -120,6 +122,12 @@ TODO: exclude members, after implementing sanctions part
   - `agent` is member
 
 ### Principle 5: Graduated sanctions
+**Notes**
+- very closely related to principle 6
+- sanction level = 1: cannot make demands anymore
+- sanction level = 2: head is empowered to exclude agent
+- head can reset agent's sanction level to 0 so that it can make demands again (via p6), but it will not reset its offence level. If the agent misbehaves AGAIN after its sanction level has been reset to 0 but offence level remains at 1 -> its offence level increases to 2, sanction level set to 2 -> agent is excluded from the institution.
+
 `reportGreed monitor agent inst`
 - side-effect: increments agent's offence level by 1
 - will succeed if:
@@ -132,6 +140,35 @@ TODO: exclude members, after implementing sanctions part
 
 `powToSanction head inst` -> `bool`
 - return `true` if head is head of inst
+
+### Principle 6: Conflict resolution
+**Notes**
+- only implemented simple appeals procedure, more complex alternative dispute resolution (ADR) methods can be done in future work
+- `upholdAppeal` in axiomatisation paper under p6 involves decrementing both the sanction level and the offence level. However, in p5, the paper said that offence level will not be decremented. Currently not decrementing offence level under the reasoning that otherwise there is no use of having separate these two levels in the first place
+  - offence level can be used to keep track of agent's criminal activity
+  - sanction level is used to keep track of what punishment the agent is currently undergoing
+
+`appealSanction agent s inst`
+- side-effect: send message `Appeal (Agent, s, Inst)` to `inst.MessageQueue`
+- will succeed if:
+  - `agent` has the power to appeal
+
+`powToAppeal agent s inst` -> `bool`
+- returns `true` if:
+  - `agent` has role `Member` in inst
+  - `agent` sanction level is `s`
+
+`upholdAppeal head agent s inst`
+- side-effect: `agent` sanction level is decremented by 1
+- will succeed if:
+  - head has the power to uphold sanctions for this agent 
+
+`powToUphold head agent s inst` -> `bool`
+- returns `true` if:
+  - `head` is head of inst
+  - `agent` has submitted an appeal for sanction level `s` in `inst`
+- side-effect: removes `Appeal` message from `inst.MessageQueue`
+
 
 ## Physical abilities of agents
 ### Initialisation
