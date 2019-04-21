@@ -51,5 +51,51 @@ let closeIssue head inst =
     else
         printfn "agent %s does not have the authority to close issues in %s" head.Name inst.Name
           
+//************************* Principle 4 *********************************/
+/// agents is a list of all agents, including inst itself -> why? Seems unnecessary, fix it TODO
+let monitorDoesJob monitor inst agents = 
+    let allocatedLst = 
+        let rec getAllocated q lst = 
+            match q with  
+            | Allocated(mem,x,ins)::rest ->
+                if ins=inst.ID then getAllocated rest (lst @ [Allocated(mem,x,ins)])  
+                else getAllocated rest lst
+            | _::rest -> getAllocated rest lst
+            | [] -> lst
+        getAllocated inst.MessageQueue [] 
+    let appropriateLst = 
+        let rec getAppropriators q lst = 
+            match q with  
+            | Appropriated(mem,x,ins)::rest ->
+                if ins=inst.ID then getAppropriators rest (lst @ [Appropriated(mem,x,ins)])  
+                else getAppropriators rest lst
+            | _::rest -> getAppropriators rest lst
+            | [] -> lst
+        getAppropriators inst.MessageQueue [] 
 
-        
+    let sameMemIns mem ins allocMsg = 
+        match allocMsg with
+        | Allocated(ag,x,i) -> ag=mem && i=ins
+        | _ -> false                
+    let checkGreed apprRecord = 
+        let reportIfTakeMore mem taken ins allocRecord = 
+            let memHolon = getHolon agents mem
+            let insHolon = getHolon agents ins
+            match allocRecord, memHolon, insHolon with
+            | Some (Allocated(_,given,_)), Some m, Some i -> 
+                if taken > given then
+                    reportGreed monitor m i
+            | None, Some m, Some i -> reportGreed monitor m i // not allocated
+            | _, Some m, Some i -> printfn "%s is not greedy in %s" m.Name i.Name
+            | _ -> printfn "What is the monitor doing?? %A \n %A \n %A \n" allocRecord memHolon insHolon
+        match apprRecord with
+        | Appropriated(mem,rTaken,ins) ->
+            List.tryFind (fun x -> sameMemIns mem ins x) allocatedLst
+            |> reportIfTakeMore mem rTaken ins 
+        | _ -> printfn "Error with %A" apprRecord   
+             
+    appropriateLst 
+    |> List.map checkGreed 
+    |> ignore
+
+//************************* Principle 5 *********************************/

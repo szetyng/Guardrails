@@ -244,7 +244,7 @@ let assignMonitor head monitor inst =
         printfn "%s has failed to assign %s as monitor to %s" head.Name monitor.Name inst.Name     
 
 let powToReport monitor agent inst = 
-    let checkCritLst = [monitor.RoleOf = Some (Monitor(inst.ID)) ; agent.RoleOf = Some (Member(inst.ID))]
+    let checkCritLst = [monitor.RoleOf = Some (Monitor(inst.ID)) ; isAgentInInst agent inst]
     not (List.contains false checkCritLst)
 
 //************************* Principle 5 *********************************/

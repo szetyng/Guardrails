@@ -1,17 +1,20 @@
 # Guardrails
 
 ## Todo
-- implement functions for the physical actions of an agent/institution
-  - appropriate resources
-  - refill resources etc
-- feedback stuff, propensity to cheat stuff, revise behaviour stuff -> parameters to the physical functions
-  - appropriation of resources takes in `r` amount of resources as an argument. Make this `r` decision here
-  - when resources dwindle, call vote on changing stuff
-- make a script only for initialisation of agents (makes it easier when you change stuff like record properties)
+- [ ] implement functions for the physical actions of an agent/institution
+  - [x] appropriate resources
+  - [x] refill resources etc
+- [ ] make sure that each message is removed from the queue after it has been acted on
+  - [ ] remove `Allocated` messages at the end of each time slice, since the monitor is not intended to sample each time slice
+- [ ] feedback stuff, propensity to cheat stuff, revise behaviour stuff -> parameters to the physical functions
+  - [ ] appropriation of resources takes in `r` amount of resources as an argument. Make this `r` decision here
+  - [ ] when resources dwindle, call vote on changing stuff
+- [ ] make a script only for initialisation of agents (makes it easier when you change stuff like record properties)
 
 ## Notes
 - for some of the principles, work out if 'agent has to be a member of the institution' means `agent.RoleOf = Member` or as long as agent holds is in the institution, whether as Member, Monitor, Gatekeepr or Head.
 - go through all functions and reevaluate where to remove messages from message queue and where not to - make a note in README.md and in comments if messages are removed
+- in `allocateResources`, might be a problem if the head tries to allocate resources to someone who's not first in the queue, then the rest of the people might not be allocated as well. Depends on how simulation code is written so be careful
 
 ## Principle-related functions
 Pure functions will take in inputs and return an output, with no side effects on the rest of the environment. However, the following functions will have side effects when it comes to things like changing the properties of agents and sending messages, which now that I think about it, shouldn't be a side effect?  
@@ -37,7 +40,8 @@ TODO: remove sending messages as a side-effect and make it a thing in the simula
   - `agent` has been approved as a member (not implemented)  
 - side-effect: removes `Applied` from `inst.MessageQueue` if it exists. Easily changed to not remove the message if need be.
 
-TODO: exclude members, after implementing sanctions part
+TODO: 
+- [ ] exclude members, after implementing sanctions part
 
 ### Principle 2: Congruence
 `demandResources agent r inst` 
@@ -68,8 +72,8 @@ TODO: exclude members, after implementing sanctions part
 
 ### Principle 3: Collective Choice Arrangements
 **TODO**
-- implement physical action to open and close issues
-- when voting on `Ration`, how to decide what amount to set as ration?
+- [x] implement physical action to open and close issues
+- [ ] when voting on `Ration`, how to decide what amount to set as ration?
 
 **Notes**
 - there's only one type of issue regarding resource allocation methods. Assuming only allowed to vote on this one type of issue. Other types are not required for now.
@@ -105,7 +109,7 @@ TODO: exclude members, after implementing sanctions part
 - as for the latter, the current level of resources can be used to change P2's resource allocation methods by using P3's voting methods.
 
 **TODO**
-- figure out how to do the third bullet point above in a simulation
+- [ ] figure out how to do the third bullet point above in a simulation
 
 `powToAssignMonitor head monitor inst` -> `bool`
 - returns `true` if 
@@ -122,6 +126,11 @@ TODO: exclude members, after implementing sanctions part
   - `agent` is member
 
 ### Principle 5: Graduated sanctions
+**Todo**
+- [ ] after monitor reports stuff, how to sanction:
+  - [ ] activate p5 in simulation, which makes head check each member's offence level and sanction them accordingly
+  - [ ] problem: if member appealed in previous time slice, head will automatically re-sanction something that was previously pardoned? Include a message type, `Forgiven` or something to keep track. Never remove this message from the queue
+  
 **Notes**
 - very closely related to principle 6
 - sanction level = 1: cannot make demands anymore
@@ -171,6 +180,11 @@ TODO: exclude members, after implementing sanctions part
 
 
 ## Physical abilities of agents
+
+## Decision-making abilities of agents
+**Todo**
+- [ ] p3: if Ration wins, how does Head decide on what R to use. Something that works in tandem with `declareWinner`?
+
 ### Initialisation
 Initially, every holon has 0 resources, except for the supra-holon, which has 100. The amount changes when the member holon appropriates resources from the supra-holon, using `appropriateResources agent r inst` which has the previously mentioned side-effects.
 

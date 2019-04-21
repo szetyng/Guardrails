@@ -136,6 +136,21 @@ let testPhyDeclareWinner() =
     closeIssue ron parks
     declareWinner ron parks
 
+let testPhyMonitor() = 
+    assignMonitor ron april parks
+    demandResources tom 20 parks
+    demandResources leslie 30 parks
+    demandResources april 10 parks
+    allocateResources ron parks april
+    allocateResources ron parks tom
+    allocateResources ron parks leslie
+    appropriateResources tom parks 10 // ok
+    appropriateResources leslie parks 30 // took too much
+    appropriateResources april parks 10 // was not allocated any
+    monitorDoesJob april parks [parks; ron; april; tom; leslie]
+  
+
+
 // Tests, make them functions so that they are only called here
 clearParksQueue()
 testGetLatestID()
@@ -150,4 +165,5 @@ testUpholdSanctions()
 testPhysicalAppropriate()
 testRefill()
 testPhyDeclareWinner()
+testPhyMonitor()
 
