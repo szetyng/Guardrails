@@ -99,3 +99,44 @@ let monitorDoesJob monitor inst agents =
     |> ignore
 
 //************************* Principle 5 *********************************/
+let headDoesJob head inst agents = 
+    let checkOffence agent = 
+        match agent.OffenceLevel, agent.SanctionLevel with
+        | 0, 0 -> ()
+        | 1, 1 -> ()
+        | 2, 2 -> ()        
+        | 1, 0 -> sanctionMember head agent inst
+        | 2, 1 -> sanctionMember head agent inst
+        | 2, 0 -> sanctionMember head agent inst
+        | x, y -> printfn "%s has offence=%i and sanction=%i, why?" agent.Name x y
+
+    agents
+    |> List.map checkOffence
+    |> ignore
+
+//************************* Principle 6 *********************************/
+// how does head decide? Make it frequency-based for simplicity
+let headFeelsForgiving head inst agents = 
+    let appealLst = 
+        let rec getAppeals q lst = 
+            match q with    
+            | Appeal(mem,x,ins)::rest ->
+                if ins=inst.ID then getAppeals rest (lst @ [(mem,x)])
+                else getAppeals rest lst
+            | _::rest -> getAppeals rest lst
+            | [] -> lst
+        getAppeals inst.MessageQueue []  
+
+    let upholds mem x =
+        let memHolon = getHolon agents mem
+        match memHolon, x with
+        | Some m, 1 | Some m, 2 -> upholdAppeal head m x inst
+        | Some m, _ -> printfn "%s cannot appeal for sanction level %i" m.Name x
+        | _ -> printfn "Member %A not found" memHolon
+
+
+    appealLst
+    |> List.map (fun (m,x) -> upholds m x)
+    |> ignore
+
+

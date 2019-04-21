@@ -105,7 +105,7 @@ let includeToInst gatekeep agent inst =
         agent.RoleOf <- Some (Member(inst.ID))
         printfn "%s has included %s as a member of %s" gatekeep.Name agent.Name inst.Name
     else
-        printfn "%s has decided to not include %s as a member of %s" gatekeep.Name agent.Name inst.Name
+        printfn "%s is not empowered to include %s as a member of %s" gatekeep.Name agent.Name inst.Name
     
 
 //************************* Principle 2 *********************************/
@@ -229,7 +229,7 @@ let declareWinner head inst =
             inst.RaMethod <- Some ra                   
         | _ -> printfn "Not a valid issue"    
     else 
-        printfn "%s has decided not to declare winner to raMethod issue in institution %s" head.Name inst.Name                 
+        printfn "%s is not empowered to declare winner to raMethod issue in institution %s" head.Name inst.Name                 
 
 //************************* Principle 4 *********************************/
 let powToAssignMonitor head monitor inst = 
@@ -288,7 +288,7 @@ let sanctionMember head agent inst =
 
 //************************* Principle 6 *********************************/
 let powToAppeal agent s inst = 
-    let checkCritLst = [agent.RoleOf = Some (Member inst.ID); agent.SanctionLevel = s]
+    let checkCritLst = [isAgentInInst agent inst; agent.SanctionLevel = s]
     not (List.contains false checkCritLst)
 
 let appealSanction agent s inst = 
@@ -305,9 +305,10 @@ let powToUphold head agent s inst =
 let upholdAppeal head agent s inst =
     if powToUphold head agent s inst then
         agent.SanctionLevel <- agent.SanctionLevel - 1
-        printfn "head %s has decremented the sanctions of member %s in inst %s to %i" head.Name agent.Name inst.Name agent.SanctionLevel
+        agent.OffenceLevel <- agent.OffenceLevel - 1
+        printfn "head %s has decremented the sanctions and offence of member %s in inst %s to %i and %i" head.Name agent.Name inst.Name agent.SanctionLevel agent.OffenceLevel
     else
-        printfn "head %s has decided not to uphold appeal of member %s in inst %s" head.Name agent.Name inst.Name
+        printfn "head %s is not empowered to uphold appeal of member %s in inst %s" head.Name agent.Name inst.Name
         
 
 

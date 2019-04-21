@@ -148,7 +148,28 @@ let testPhyMonitor() =
     appropriateResources leslie parks 30 // took too much
     appropriateResources april parks 10 // was not allocated any
     monitorDoesJob april parks [parks; ron; april; tom; leslie]
-  
+
+let testPhyHead() = 
+    tom.OffenceLevel <- 1
+    tom.SanctionLevel <- 0
+    april.OffenceLevel <- 1
+    april.SanctionLevel <- 1
+    headDoesJob ron parks [parks; ron; april; tom; leslie]
+
+let testPhyHeadForgives() = 
+    tom.OffenceLevel <- 1
+    tom.SanctionLevel <- 1
+    april.OffenceLevel <- 2
+    april.SanctionLevel <- 2
+    leslie.OffenceLevel <- 0
+    leslie.SanctionLevel <- 0
+
+    appealSanction tom 1 parks
+    appealSanction april 1 parks // wrong -> no message sent
+    appealSanction april 2 parks
+    appealSanction leslie 0 parks // can't appeal 0
+
+    headFeelsForgiving ron parks [parks; ron; april; tom; leslie]
 
 
 // Tests, make them functions so that they are only called here
@@ -166,4 +187,5 @@ testPhysicalAppropriate()
 testRefill()
 testPhyDeclareWinner()
 testPhyMonitor()
-
+testPhyHead()
+testPhyHeadForgives()

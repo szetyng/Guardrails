@@ -136,6 +136,7 @@ TODO:
 - sanction level = 1: cannot make demands anymore
 - sanction level = 2: head is empowered to exclude agent
 - head can reset agent's sanction level to 0 so that it can make demands again (via p6), but it will not reset its offence level. If the agent misbehaves AGAIN after its sanction level has been reset to 0 but offence level remains at 1 -> its offence level increases to 2, sanction level set to 2 -> agent is excluded from the institution.
+- above bullet point is disregarded. If head upholds appeal, then both the offence level and sanction level are decremented. Might want to implement a reset sanction function that does the above bullet point?
 
 `reportGreed monitor agent inst`
 - side-effect: increments agent's offence level by 1
@@ -156,6 +157,7 @@ TODO:
 - `upholdAppeal` in axiomatisation paper under p6 involves decrementing both the sanction level and the offence level. However, in p5, the paper said that offence level will not be decremented. Currently not decrementing offence level under the reasoning that otherwise there is no use of having separate these two levels in the first place
   - offence level can be used to keep track of agent's criminal activity
   - sanction level is used to keep track of what punishment the agent is currently undergoing
+- re: above bullet point. Disregarded. Both levels are decremented, to show the difference between a monitor doing its job and a head doing its job
 
 `appealSanction agent s inst`
 - side-effect: send message `Appeal (Agent, s, Inst)` to `inst.MessageQueue`
@@ -168,7 +170,7 @@ TODO:
   - `agent` sanction level is `s`
 
 `upholdAppeal head agent s inst`
-- side-effect: `agent` sanction level is decremented by 1
+- side-effect: `agent` sanction level and offence level are decremented by 1
 - will succeed if:
   - head has the power to uphold sanctions for this agent 
 
