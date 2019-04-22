@@ -11,26 +11,32 @@ let refillResources inst r =
 
 //************************* Principle 1 *********************************/
 /// Gatekeeper checks for applications
-// let gatekeepChecksInclude gatekeep inst agents = 
-//     let applicationLst = 
-//         let rec getApplications q lst = 
-//             match q with
-//             | Applied(mem,ins)::rest ->
-//                 if ins=inst.ID then getApplications rest (lst @ [Applied(mem,ins)])
-//                 else getApplications rest lst
-//             | _::rest -> getApplications rest lst
-//             | [] -> lst
-//         getApplications inst.MessageQueue []
-
-//     let doesInclude appRecord =
-//         match appRecord with
-//         | Applied(mem,ins) -> 
-
-//     applicationLst
-//     |> List.map doesInclude 
+let gatekeepChecksInclude gatekeep inst agents = 
+    let getInfoAndInclude mem =
+        let memHolon = getHolon agents mem
+        match memHolon with
+        | Some h -> includeToInst gatekeep h inst
+        | None -> printfn "Holon not found"
+    let doesInclude msg =
+        match msg with
+        | Applied(mem,ins) when ins=inst.ID -> getInfoAndInclude mem  
+        | _ -> ()
+    inst.MessageQueue
+    |> List.map doesInclude 
+    |> ignore
 
 
 /// Gatekeeper checks if anyone should be sanctioned -> how often should this happen?
+let gatekeepChecksExclude gatekeep inst agents = 
+    let checkSanction agent = 
+        match agent.SanctionLevel, inst.SanctionLimit with
+        | agentSanction, instLimit when agentSanction>=instLimit -> excludeFromInst gatekeep agent inst
+        | _ -> ()
+
+    agents
+    |> List.filter (fun a -> isAgentInInst a inst)
+    |> List.map checkSanction
+    |> ignore
 
 
 //************************* Principle 2 *********************************/

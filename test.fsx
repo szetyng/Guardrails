@@ -178,12 +178,10 @@ let testP1() =
     jerry.SanctionLevel <- 2
     applyToInst jerry parks
 
-    includeToInst leslie april parks
-    includeToInst leslie donna parks
-    includeToInst leslie jerry parks
+    gatekeepChecksInclude leslie parks [ron; april; tom; donna; leslie]
 
     donna.SanctionLevel <- 2
-    excludeFromInst leslie donna parks
+    gatekeepChecksExclude leslie parks [ron; april; tom; donna; leslie]
 
 
 // Tests, make them functions so that they are only called here
