@@ -1,7 +1,7 @@
 # Guardrails
 
 ## Todo
-- [ ] implement functions for the physical actions of an agent/institution
+- [x] implement functions for the physical actions of an agent/institution
   - [x] appropriate resources
   - [x] refill resources etc
 - [ ] make sure that each message is removed from the queue after it has been acted on
@@ -182,6 +182,56 @@ TODO:
 
 
 ## Physical abilities of agents
+### Misc
+`refillResources inst r`
+- side-effect: inst.Resources += r
+
+### Principle 2
+`allocateResources head inst agent`
+- side-effect: inst.MessageQueue gets a new `Allocated` message
+- will succeed if:
+  - head has the power to allocate resources to the agent (agent needs to have already made a demand)
+
+`appropriateResources agent inst r`
+- side-effect: 
+  - agent.Resources += some amount
+  - inst.Resources -= some amount
+  - inst.MessageQueue gets a new `Appropriated` message
+- some amount = r if there inst has more than r resources available
+- some amount = the entire inst.Resources otherwise, and the CPR is drained completely
+
+### Principle 3
+`openIssue head inst`
+- side-effect: inst.IssueStatus = true
+- will succeed if:
+  - head is head
+
+`closeIssue head inst`
+- side-effect: inst.IssueStatus = false
+- will succeed if:
+  - head is head
+
+### Principle 4
+**Todo**
+- [ ] please rewrite `monitorDoesJob`
+
+`monitorDoesJob monitor inst agents`
+- side-effect: agents who were greedy would have their OffenceLevel be incremented by 1
+- monitor goes through inst.MessageQueue and collects all `Allocated` and `Appropriated` messages
+- for each `Appropriated` message, check if there was a corresponding `Allocated` message
+  - if there is no corresponding `Allocated` message, the agent is not allowed to appropriate 
+  - if the corresponding `Allocated` message indicates that the agent took more than was given, then that's not good
+
+### Principle 5
+`headDoesJob head inst agents` 
+- side-effect: some agents would have their sanction level be modified to be equal to their offence level
+- head goes through all the agents in the inst and checks if there was a need to change the sanction level of the agent
+
+### Principle 6
+`headFeelsForgiving head inst agents`
+- side-effect: for each agent who appealed, their OffenceLevel and SanctionLevel are decremented by 1
+- head goes through MessageQueue of inst to get all `Appeal` messages
+- for each `Appeal` message, head will uphold the appeal and forgive the agent's mistake
 
 ## Decision-making abilities of agents
 **Todo**
