@@ -22,6 +22,10 @@ Pure functions will take in inputs and return an output, with no side effects on
 TODO: remove sending messages as a side-effect and make it a thing in the simulation instead (benefit: easier to keep track of when there are less side-effects). Or maybe not? Do things that make sense from the function name's POV, e.g.: assume `applyToInst` WILL send the message `Applied`, rather than just returning the message type without doing anything with it. Include in comment/documentation when functions send messages like so.
 
 ### Principle 1: Clearly defined boundaries
+**Notes**
+- holons can apply for membership as long as they are institution-less and they are within the sanction limit - these are the only criteria for membership, nothing else
+- holons will be excluded from the institution when their sanction level exceeds the limit allowed
+
 `applyToInst agent inst`
 - will be successful if:
   - `agent` does not already occupy a role in `inst`

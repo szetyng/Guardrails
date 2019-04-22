@@ -20,7 +20,8 @@ let def =
         WdMethod = None;
         MonitoringFreq = 0.5;
         MonitoringCost = 10;
-        IssueStatus = false
+        IssueStatus = false;
+        SanctionLimit = 2
     }
 
 let parks = {def with ID=0; Name="parks"; Resources=100; WdMethod = Some Plurality; RaMethod=Some (Ration(Some 10))}
@@ -147,7 +148,7 @@ let testPhyMonitor() =
     appropriateResources tom parks 10 // ok
     appropriateResources leslie parks 30 // took too much
     appropriateResources april parks 10 // was not allocated any
-    monitorDoesJob april parks [parks; ron; april; tom; leslie]
+    monitorDoesJob april parks [ron; april; tom; leslie]
 
 let testPhyHead() = 
     tom.OffenceLevel <- 1
@@ -169,7 +170,20 @@ let testPhyHeadForgives() =
     appealSanction april 2 parks
     appealSanction leslie 0 parks // can't appeal 0
 
-    headFeelsForgiving ron parks [parks; ron; april; tom; leslie] 2
+    headFeelsForgiving ron parks [ron; april; tom; leslie] 2
+
+let testP1() = 
+    applyToInst april parks
+    applyToInst donna parks
+    jerry.SanctionLevel <- 2
+    applyToInst jerry parks
+
+    includeToInst leslie april parks
+    includeToInst leslie donna parks
+    includeToInst leslie jerry parks
+
+    donna.SanctionLevel <- 2
+    excludeFromInst leslie donna parks
 
 
 // Tests, make them functions so that they are only called here
@@ -189,3 +203,4 @@ testPhyDeclareWinner()
 testPhyMonitor()
 testPhyHead()
 testPhyHeadForgives()
+testP1()

@@ -39,6 +39,7 @@ type Holon =
         mutable OffenceLevel : int;
 
         // For supra-holons
+        mutable SanctionLimit : int;
         mutable RaMethod : ResAllocMethod option;
         mutable WdMethod : WinDetMethod option;
         mutable MonitoringFreq : float;

@@ -76,28 +76,31 @@ let isAgentInInst agent inst =
     | _ -> false
 
 //************************* Principle 1 *********************************/
-/// Sends message from agent to inst
+/// Sends Applied message from agent to inst
+/// if agent qualifies as a member
 let applyToInst agent inst = 
+    let checkCritLst = [agent.RoleOf = None; agent.SanctionLevel < inst.SanctionLimit]
     let applicationRes = 
-        match agent.RoleOf with
-        | None -> Some (Applied (agent.ID, inst.ID))
-        | Some _ -> None
+        match List.contains false checkCritLst with
+        | false -> Some (Applied (agent.ID, inst.ID))
+        | true -> None
+    // let applicationRes = 
+    //     match agent.RoleOf with
+    //     | None -> Some (Applied (agent.ID, inst.ID))
+    //     | Some _ -> None
     sendMessage applicationRes inst    
     //applicationRes 
 
 /// SIDE-EFFECT: inst.MessageQueue
 /// is gatekeep empowered to include agent into inst -> bool
 let powToInclude gatekeep agent inst = 
-    // Check against message queue
-    let facts = [Applied (agent.ID, inst.ID)]
-    // TODO: don't remove the fact yet... maybe not all of it was TRUE
-    let factCheck = List.fold (fun state f -> state && checkFromQ inst f true) true facts
-    
-    // Check others
-    let checkCritLst = [factCheck ; (gatekeep.RoleOf = Some (Gatekeeper(inst.ID)))]     
+    let didAgentApply a i =
+        let application = Applied (a.ID, i.ID)
+        checkFromQ i application true
+
+    let checkCritLst = [didAgentApply agent inst ; (gatekeep.RoleOf = Some (Gatekeeper(inst.ID)))]     
     not (List.contains false checkCritLst) 
              
-      
 /// SIDE-EFFECT: agent.RoleOf
 /// gatekeep includes agent into inst 
 let includeToInst gatekeep agent inst = 
@@ -106,8 +109,17 @@ let includeToInst gatekeep agent inst =
         printfn "%s has included %s as a member of %s" gatekeep.Name agent.Name inst.Name
     else
         printfn "%s is not empowered to include %s as a member of %s" gatekeep.Name agent.Name inst.Name
-    
 
+let powToExclude gatekeep agent inst =
+    let checkCritLst = [gatekeep.RoleOf = Some (Gatekeeper(inst.ID)); agent.SanctionLevel >= inst.SanctionLimit]
+    not (List.contains false checkCritLst)
+
+let excludeFromInst gatekeep agent inst = 
+    if powToExclude gatekeep agent inst then
+        agent.RoleOf <- None    
+        printfn "%s has excluded %s from %s" gatekeep.Name agent.Name inst.Name
+    else
+        printfn "%s is not empowered to exclude %s from %s" gatekeep.Name agent.Name inst.Name
 //************************* Principle 2 *********************************/
 
 let powToDemand agent inst step = 
