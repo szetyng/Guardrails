@@ -169,7 +169,7 @@ let testPhyHeadForgives() =
     appealSanction april 2 parks
     appealSanction leslie 0 parks // can't appeal 0
 
-    headFeelsForgiving ron parks [parks; ron; april; tom; leslie]
+    headFeelsForgiving ron parks [parks; ron; april; tom; leslie] 2
 
 
 // Tests, make them functions so that they are only called here
