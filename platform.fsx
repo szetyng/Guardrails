@@ -41,6 +41,14 @@ let getSupraID agent =
 /// get holon record from the list of Agents based on its HolonID
 let getHolon agents holonID = List.tryFind (fun a -> a.ID = holonID) agents
 
+let getSupraHolon agent agents= 
+    match agent.RoleOf with
+    | Some (Head supraID) -> getHolon agents supraID
+    | Some (Gatekeeper supraID) -> getHolon agents supraID
+    | Some (Monitor supraID) -> getHolon agents supraID
+    | Some (Member supraID) -> getHolon agents supraID
+    | None -> None
+
 let findApplicants inst = 
     let q = inst.MessageQueue
     let i = inst.ID
@@ -74,6 +82,13 @@ let isAgentInInst agent inst =
     match agent.RoleOf, inst.ID with
     | Some (Member (sID)), i| Some (Head (sID)), i | Some (Monitor (sID)), i| Some (Gatekeeper (sID)), i -> sID = i
     | _ -> false
+
+let printNames agents = 
+    agents
+    |> List.map (fun a -> printf "%s, " a.Name)
+    |> ignore
+
+    printfn ""
 
 //************************* Principle 1 *********************************/
 /// Sends Applied message from agent to inst

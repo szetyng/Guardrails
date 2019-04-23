@@ -239,12 +239,25 @@ TODO:
 
 ## Decision-making abilities of agents
 **Todo**
+- [ ] p2: how does agent decide how much to demand?
+- [ ] p2: how does agent decide how much to appropriate? According to allocation, or according to greedy wants?
+- [ ] p3: how does head decide to open issue?
+  - for now: when resource level <= `k * resources`. `k` is a percentage that represents safety margin of the institution
+- [ ] p3: how does agent decide on which `raMethod` to vote for?
 - [ ] p3: if Ration wins, how does Head decide on what R to use. Something that works in tandem with `declareWinner`?
+- [ ] p4: monitor decides whether or not it wants to do its job -> if random number <= monitoring freq, where freq is in range (0,1)
+- [ ] p6: how does agent decide if they want to appeal? Probably similar to compliancy in p2
 
-### Initialisation
+**Maybe todo, maybe simplify**
+- [ ] p1: how does homeless agent decide to apply or not? 
+- [ ] p1: how does member decide if they want to stay or leave the institution?
+
+Might just do away with application and decision to stay or leave institution, just create fixed institutions for now, no way for member to voluntarily leave (but heads can still exclude misbehaving members).
+
+## Initialisation
 Initially, every holon has 0 resources, except for the supra-holon, which has 100. The amount changes when the member holon appropriates resources from the supra-holon, using `appropriateResources agent r inst` which has the previously mentioned side-effects.
 
-### Simulation
+## Simulation
 A list of all the holonic agents are passed to the `simulate` function. In the beginning, a list of `supraHolons` are identified from the list of holons. In this project, there will be 3 `supraHolons` with the following hierarchy:
 ```
                 offices
@@ -260,3 +273,5 @@ A list of all the holonic agents are passed to the `simulate` function. In the b
 Thus, `supraHolons = [offices ; parks ; brooklyn]`. `offices.RoleOf = None`, while `parks` and `brooklyn` would have `RoleOf = Some (Member (offices))`.  
 
 Want to go through each agent and see what they want to do. This will have a lot to do with agent behaviour, compliancy, level of resources (if they poor, utility of cheating becomes higher etc). 
+
+Also, for simplicity and to make sure that they are never expelled from the institution (thus, assume that they do their jobs perfectly), `Head`, `Monitor` and `Gatekeeper` do not make demands and do not appropriate resources. `Monitor` still gets paid to do its job, since this cost is not meant to incentivise monitor (assume perfect monitor) but to deter the institution from having them sample the environment at every time slice.

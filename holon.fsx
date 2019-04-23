@@ -30,20 +30,21 @@ type Holon =
         ID : HolonID;
         Name : string;
         mutable Resources : int;
+        ResourceCap : int;
         mutable MessageQueue : MessageType list;
 
         // For sub-holons        
         mutable RoleOf : RoleIn option;
-        mutable CompliancyDegree : float;
+        CompliancyDegree : float;
         mutable SanctionLevel : int;
         mutable OffenceLevel : int;
 
         // For supra-holons
-        mutable SanctionLimit : int;
+        SanctionLimit : int;
         mutable RaMethod : ResAllocMethod option;
         mutable WdMethod : WinDetMethod option;
-        mutable MonitoringFreq : float;
-        mutable MonitoringCost : int
+        MonitoringFreq : float;
+        MonitoringCost : int;
         mutable IssueStatus : bool
     }
 

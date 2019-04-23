@@ -85,8 +85,7 @@ let closeIssue head inst =
           
 //************************* Principle 4 *********************************/
 /// Monitor goes through MessageQueue of inst to find misbehaving agents
-/// Misbehaving agents' OffenceLevel++
-/// agents is a list of all agents, including inst itself -> why? Seems unnecessary, fix it TODO
+/// Misbehaving agents' OffenceLevel++, Monitor is paid by inst in terms of Resources
 let monitorDoesJob monitor inst agents = 
     let hasBeenAllocated mem ins allocMsg = 
         match allocMsg with
@@ -107,10 +106,19 @@ let monitorDoesJob monitor inst agents =
             List.tryFind (fun x -> hasBeenAllocated mem ins x) inst.MessageQueue
             |> reportIfTakeMore mem rTaken  
         | _ -> () 
-             
-    inst.MessageQueue
-    |> List.map checkGreed 
-    |> ignore
+
+    let pool = inst.Resources
+    let cost = inst.MonitoringCost
+    let initMonitorAmt = monitor.Resources
+    match pool with
+    | tot when tot >= cost -> 
+        inst.Resources <- pool - cost
+        monitor.Resources <- initMonitorAmt + cost        
+        printfn "Monitor is checking for misbehavior, is paid %i to get total of %i; inst amount decreased to %i" cost monitor.Resources inst.Resources    
+        inst.MessageQueue
+        |> List.map checkGreed 
+        |> ignore
+    | _ -> printfn "Inst has %i resources, not enough to pay %i for monitoring" cost pool
 
 //************************* Principle 5 *********************************/
 /// Head goes through all the agents in inst and corrects SanctionLevel 
