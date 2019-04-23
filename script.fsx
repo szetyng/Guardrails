@@ -11,4 +11,3 @@ open Simulation
 open Initialisation
 
 simulate allAgents 0
-printNames allAgents

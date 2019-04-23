@@ -41,5 +41,11 @@ let simulate agents time =
     // P1: Gatekeeper checks for members to be kicked out
     gatekeepers
     |> List.map (fun g -> gatekeepChecksExclude g (getSupra g) agents)
+    |> ignore
 
-    // P2: 
+    // P2: Members of institutions make demands
+    regHolons
+    |> List.filter (fun h -> checkRole h "Member")
+    |> List.map (fun h -> demandResources h 10 (getSupra h))
+    |> ignore
+    //demandResources agent r inst
