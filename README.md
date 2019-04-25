@@ -4,6 +4,8 @@
 - [x] implement functions for the physical actions of an agent/institution
   - [x] appropriate resources
   - [x] refill resources etc
+- [ ] don't send appropriation message if x=0
+- [ ] don't print all those messages anymore, too cluttered
 - [ ] make sure that each message is removed from the queue after it has been acted on
   - [ ] remove `Allocated` messages at the end of each time slice, since the monitor is not intended to sample each time slice
 - [ ] feedback stuff, propensity to cheat stuff, revise behaviour stuff -> parameters to the physical functions

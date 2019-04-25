@@ -10,5 +10,5 @@ open Physical
 open Simulation
 open Initialisation
 
-simulate allAgents 0
+simulate allAgents 0 5
 

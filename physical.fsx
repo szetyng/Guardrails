@@ -68,6 +68,7 @@ let allocateAllResources head inst agents =
 /// Move r resources from inst to agent, if available
 /// Sends Appropriated message to inst's MessageQueue
 /// TODO: agent decides what r is, from Allocated or from greed
+/// TODO: rewrite, don't send appropriation message if x = 0
 let appropriateResources agent inst r = 
     let pool = inst.Resources
     let own = agent.Resources

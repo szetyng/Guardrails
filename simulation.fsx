@@ -8,9 +8,7 @@ open Platform
 open Physical
 open Decisions
 
-let simulate agents time = 
-    printfn "t=%i" time
-
+let simulate agents time tmax = 
     let supraHolons = 
         List.map getSupraID agents
         |> List.distinct
@@ -38,28 +36,53 @@ let simulate agents time =
     printfn "Monitors are:"
     List.map (fun x -> printfn "%s" x.Name) monitors |> ignore 
 
-    // P1: Gatekeeper checks for members to be kicked out
-    gatekeepers
-    |> List.map (fun g -> gatekeepChecksExclude g (getSupra g) agents)
-    |> ignore
-  
-    let tripleMemInstR mem = 
-        let i = getSupra mem
-        let r = decideOnR mem i
-        (mem, i, r)
+    let rec runSimulate time =
+        printfn "t=%i" time
+        // P1: Gatekeeper checks for members to be kicked out
+        gatekeepers
+        |> List.map (fun g -> gatekeepChecksExclude g (getSupra g) agents)
+        |> ignore
+      
+        let tripleMemInstR mem = 
+            let i = getSupra mem
+            let r = decideOnR mem i
+            (mem, i, r)
 
-    // P2: Members of institutions make demands
-    regHolons
-    |> List.filter (fun h -> checkRole h "Member")
-    |> List.map (tripleMemInstR >> (fun (h,i,r) -> demandResources h r i time))
-    |> ignore
+        // P2: Members of institutions make demands
+        regHolons
+        |> List.filter (fun h -> checkRole h "Member")
+        |> List.map (tripleMemInstR >> (fun (h,i,r) -> demandResources h r i time))
+        |> ignore
 
-    let pairHeadInst head = 
-        let i = getSupra head
-        printfn "Head: %s, inst: %s" head.Name i.Name
-        (head, i)
+        let pairHeadInst head = 
+            let i = getSupra head
+            printfn "Head: %s, inst: %s" head.Name i.Name
+            (head, i)
 
-    // P2: Heads of institutions allocate demands
-    heads
-    |> List.map (pairHeadInst >> (fun (h,i) -> allocateAllResources h i agents))
-    |> ignore
+        // P2: Heads of institutions allocate demands
+        heads
+        |> List.map (pairHeadInst >> (fun (h,i) -> allocateAllResources h i agents))
+        |> ignore
+
+        let doubleMemInst mem = 
+            let i = getSupra mem
+            (mem, i)
+
+        // P2: Members of institutions make appropriations
+        regHolons
+        |> List.filter (fun h -> checkRole h "Member")
+        |> List.map (doubleMemInst >> (fun (m,i) -> (m,i,(decideOnR m i))) >> (fun (m,i,r) -> appropriateResources m i r))
+        |> ignore
+
+        // P3: Heads decide if they want to open vote or not
+
+
+        // REFILL
+        supraHolons
+        |> List.map (fun inst -> inst.Resources <- inst.Resources + 300)
+        |> ignore
+
+        match time with
+        | t when t=tmax -> ()
+        | t -> runSimulate (t+1)
+    runSimulate time    
