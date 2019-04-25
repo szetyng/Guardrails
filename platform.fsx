@@ -153,10 +153,10 @@ let powToDemand agent inst step =
     let checkCritLst = [isAgentInInst agent inst ; agent.SanctionLevel = 0; not hasAgentDemanded]
     not (List.contains false checkCritLst)
 
-let demandResources agent r inst = 
+let demandResources agent r inst t = 
     let demandRes = 
     // TODO: time step
-        match powToDemand agent inst 0 with
+        match powToDemand agent inst t with
         | true -> Some (Demanded (agent.ID, r, inst.ID))
         | false -> None
     sendMessage demandRes inst

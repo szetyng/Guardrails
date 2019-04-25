@@ -11,5 +11,5 @@ open Physical
 
 
 /// TODO: agent decides what r is, from Allocated or from greed
-let desireToCheat agent =
+let decideOnR agent inst = 25
     

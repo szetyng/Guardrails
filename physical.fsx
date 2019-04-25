@@ -40,13 +40,30 @@ let gatekeepChecksExclude gatekeep inst agents =
 
 
 //************************* Principle 2 *********************************/
-/// Sends Allocated message to inst's MessageQueue
-let allocateResources head inst agent =
-    let demandedR = powToAllocate head inst agent
+/// Sends multiple Allocated message to inst's MessageQueue
+let allocateAllResources head inst agents = 
+    let allocateResources mem = 
+        let memHolon = getHolon agents mem
 
-    match demandedR with
-    | 0 -> printfn "head %s cannot allocate resources to %s in inst %s" head.Name agent.Name inst.Name
-    | x -> sendMessage (Some (Allocated(agent.ID,x,inst.ID))) inst
+        let demandedR =
+            match memHolon with
+            | Some m -> powToAllocate head inst m 
+            | None -> 0
+        
+        match demandedR, memHolon with
+        | 0, Some m -> printfn "head %s cannot allocate resources to %s in inst %s" head.Name m.Name inst.Name
+        | x, Some m -> sendMessage (Some (Allocated(m.ID,x,inst.ID))) inst
+        | _, None -> printfn "Holon not found"
+
+    let allocateFromDemand msg =
+        match msg with
+        // r demanded not required because platform checks for it
+        | Demanded(mem,_,ins) when ins=inst.ID -> allocateResources mem
+        | _ -> () 
+
+    inst.MessageQueue 
+    |> List.map allocateFromDemand
+    |> ignore
 
 /// Move r resources from inst to agent, if available
 /// Sends Appropriated message to inst's MessageQueue
@@ -110,6 +127,8 @@ let monitorDoesJob monitor inst agents =
     let pool = inst.Resources
     let cost = inst.MonitoringCost
     let initMonitorAmt = monitor.Resources
+
+    // Monitor does job only if inst can afford to pay for it
     match pool with
     | tot when tot >= cost -> 
         inst.Resources <- pool - cost

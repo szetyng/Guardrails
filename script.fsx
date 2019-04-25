@@ -11,3 +11,4 @@ open Simulation
 open Initialisation
 
 simulate allAgents 0
+

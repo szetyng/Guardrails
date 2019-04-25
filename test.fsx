@@ -21,7 +21,8 @@ let def =
         MonitoringFreq = 0.5;
         MonitoringCost = 10;
         IssueStatus = false;
-        SanctionLimit = 2
+        SanctionLimit = 2;
+        ResourceCap = 500;
     }
 
 let parks = {def with ID=0; Name="parks"; Resources=100; WdMethod = Some Plurality; RaMethod=Some (Ration(Some 10))}
@@ -41,14 +42,13 @@ let testGetLatestID() =
     i = 6
 
 let testDemandResources() = 
-    demandResources tom 20 parks
-    demandResources tom 5 parks
+    demandResources tom 20 parks 0
+    demandResources tom 5 parks 0
 
 let testPowToAllocate() = 
-    demandResources tom 20 parks
-    demandResources april 40 parks
-    allocateResources ron parks tom
-    allocateResources ron parks april
+    demandResources tom 20 parks 0
+    demandResources april 40 parks 0
+    allocateAllResources ron parks [tom;april]
 
 let testVoting() = 
     doVote tom parks Queue
@@ -82,7 +82,7 @@ let testPowToReport() =
 let testSanction() = 
     assignMonitor ron april parks
     let tomWants = 10
-    demandResources tom tomWants parks
+    demandResources tom tomWants parks 0
     let tomGets = powToAllocate ron parks tom 
 
     // allocate resources to tom
@@ -99,7 +99,7 @@ let testSanction() =
 let testUpholdSanctions() = 
     assignMonitor ron april parks
     let tomWants = 20
-    demandResources tom tomWants parks
+    demandResources tom tomWants parks 0
     let tomGets = powToAllocate ron parks tom 
 
     // allocate resources to tom
@@ -119,10 +119,9 @@ let testUpholdSanctions() =
 
 // april will fail because she is not first in queue
 let testPhysicalAppropriate() = 
-    demandResources tom 20 parks
-    demandResources april 10 parks
-    allocateResources ron parks april
-    allocateResources ron parks tom
+    demandResources tom 20 parks 0
+    demandResources april 10 parks 0
+    allocateAllResources ron parks [april;tom]
     appropriateResources tom parks 10
 
 let testRefill() = 
@@ -139,12 +138,10 @@ let testPhyDeclareWinner() =
 
 let testPhyMonitor() = 
     assignMonitor ron april parks
-    demandResources tom 20 parks
-    demandResources leslie 30 parks
-    demandResources april 10 parks
-    allocateResources ron parks april
-    allocateResources ron parks tom
-    allocateResources ron parks leslie
+    demandResources tom 20 parks 0
+    demandResources leslie 30 parks 0
+    demandResources april 10 parks 0
+    allocateAllResources ron parks [april;tom;leslie]
     appropriateResources tom parks 10 // ok
     appropriateResources leslie parks 30 // took too much
     appropriateResources april parks 10 // was not allocated any
