@@ -280,6 +280,7 @@ In this experiment, `parks` and `brooklyn` have 9 members each (people in power 
 The resources are refilled, near the end of each time slice (after appropriation of resources and paying the monitor). The `Head` of each supra-holon will then decide whether or not they would want to call for a vote on changing the resource allocation method - based on the amount of resources left (and the refill that the institution will be getting for the next time slice - this was before I decided to change the refill timing).
 
 In every time slice, the resources can be refilled at either high, medium or low levels (not exceeding their maximum capacity, of course). The experiment will go on for 50 time slices; the refill rate will be changed in blocks of 5 time slices, so it changes 10 times in this repeating sequence: high, high, medium, low.    
+
 | Rate    | Resource amount after refill            |
 |---|---|
 | High    | `min(ResourceCap, R+ResourceCap)`       |
