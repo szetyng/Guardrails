@@ -4,8 +4,8 @@
 - [x] implement functions for the physical actions of an agent/institution
   - [x] appropriate resources
   - [x] refill resources etc
-- [ ] don't send appropriation message if x=0
-- [ ] don't print all those messages anymore, too cluttered
+- [x] don't send appropriation message if x=0
+- [x] don't print all those messages anymore, too cluttered
 - [ ] make sure that each message is removed from the queue after it has been acted on
   - [ ] remove `Allocated` messages at the end of each time slice, since the monitor is not intended to sample each time slice
 - [ ] feedback stuff, propensity to cheat stuff, revise behaviour stuff -> parameters to the physical functions
@@ -257,9 +257,6 @@ TODO:
 Might just do away with application and decision to stay or leave institution, just create fixed institutions for now, no way for member to voluntarily leave (but heads can still exclude misbehaving members).
 
 ## Initialisation
-Initially, every holon has 0 resources, except for the supra-holon, which has 100. The amount changes when the member holon appropriates resources from the supra-holon, using `appropriateResources agent r inst` which has the previously mentioned side-effects.
-
-## Simulation
 A list of all the holonic agents are passed to the `simulate` function. In the beginning, a list of `supraHolons` are identified from the list of holons. In this project, there will be 3 `supraHolons` with the following hierarchy:
 ```
                 offices
@@ -274,6 +271,24 @@ A list of all the holonic agents are passed to the `simulate` function. In the b
 
 Thus, `supraHolons = [offices ; parks ; brooklyn]`. `offices.RoleOf = None`, while `parks` and `brooklyn` would have `RoleOf = Some (Member (offices))`.  
 
+Initially, every holon has 0 resources, except for the supra-holons. The amount changes when the member holon appropriates resources from the supra-holon, using `appropriateResources agent r inst` which has the previously mentioned side-effects.
+
+Initially, the supra-holon at the highest hierarchy will have 500 resources while the supra-holons below it will have 200 - these are the maximum capacity of the holons. Base holons' maximum capacity is 20.
+
+In this experiment, `parks` and `brooklyn` have 9 members each (people in power do not make demands), and each member would demand for 10 resources in each time slice. Thus, at the end of the time slice, the supra-holon will only have 110 resources left if each member appropriates 10 resources each. 
+
+The resources are refilled, near the end of each time slice (after appropriation of resources and paying the monitor). The `Head` of each supra-holon will then decide whether or not they would want to call for a vote on changing the resource allocation method - based on the amount of resources left (and the refill that the institution will be getting for the next time slice - this was before I decided to change the refill timing).
+
+In every time slice, the resources can be refilled at either high, medium or low levels (not exceeding their maximum capacity, of course). The experiment will go on for 50 time slices; the refill rate will be changed in blocks of 5 time slices, so it changes 10 times in this repeating sequence: high, high, medium, low. 
+| Rate  | Resource amount after refill           |
+|-------|----------------------------------------|
+| High  | `min(ResourceCap, R+ResourceCap)`      |
+| Medium| `min(ResourceCap, R+0.5*ResourceCap)`  |
+| Low   | `min(ResourceCap, R+0.25*ResourceCap)` |  
+
+
+
+## Simulation
 Want to go through each agent and see what they want to do. This will have a lot to do with agent behaviour, compliancy, level of resources (if they poor, utility of cheating becomes higher etc). 
 
 Also, for simplicity and to make sure that they are never expelled from the institution (thus, assume that they do their jobs perfectly), `Head`, `Monitor` and `Gatekeeper` do not make demands and do not appropriate resources. `Monitor` still gets paid to do its job, since this cost is not meant to incentivise monitor (assume perfect monitor) but to deter the institution from having them sample the environment at every time slice.
