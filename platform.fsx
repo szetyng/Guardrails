@@ -8,8 +8,10 @@ let sendMessage msg recipient =
     match msg with
     | Some m -> 
         recipient.MessageQueue <- recipient.MessageQueue @ [m]
-        printfn "%s has received message %A" recipient.Name m 
-    | None -> printfn "No message to be sent to %s" recipient.Name
+        // printfn "%s has received message %A" recipient.Name m 
+    | None -> 
+        ()
+        //printfn "No message to be sent to %s" recipient.Name
 
 /// get holonID of last agent in list of Agents
 let getLatestId agents = 
@@ -73,7 +75,7 @@ let checkFromQ agent fact toRemove =
             | h::rest -> h::(removeFirstX rest x)
             | _ -> []
         agent.MessageQueue <- removeFirstX agent.MessageQueue fact
-        printfn "%A has been removed from %s inbox" fact agent.Name 
+        // printfn "%A has been removed from %s inbox" fact agent.Name 
         true
     | true, false -> true
     | false, _ -> false    
@@ -95,16 +97,12 @@ let printNames agents =
 /// if agent qualifies as a member
 let applyToInst agent inst = 
     let checkCritLst = [agent.RoleOf = None; agent.SanctionLevel < inst.SanctionLimit]
-    let applicationRes = 
-        match List.contains false checkCritLst with
-        | false -> Some (Applied (agent.ID, inst.ID))
-        | true -> None
-    // let applicationRes = 
-    //     match agent.RoleOf with
-    //     | None -> Some (Applied (agent.ID, inst.ID))
-    //     | Some _ -> None
-    sendMessage applicationRes inst    
-    //applicationRes 
+    match List.contains false checkCritLst with
+    | false -> 
+        printfn "agent %s applied to inst %s" agent.Name inst.Name
+        inst.MessageQueue <- inst.MessageQueue @ [Applied (agent.ID, inst.ID)]
+    | true -> 
+        printfn "agent %s failed to apply to inst %s" agent.Name inst.Name
 
 /// SIDE-EFFECT: inst.MessageQueue
 /// is gatekeep empowered to include agent into inst -> bool
@@ -154,12 +152,11 @@ let powToDemand agent inst step =
     not (List.contains false checkCritLst)
 
 let demandResources agent r inst t = 
-    let demandRes = 
-    // TODO: time step
-        match powToDemand agent inst t with
-        | true -> Some (Demanded (agent.ID, r, inst.ID))
-        | false -> None
-    sendMessage demandRes inst
+    match powToDemand agent inst t with
+    | true -> 
+        // printfn "member %s demanded %i from inst %s" agent.Name r inst.Name 
+        inst.MessageQueue <- inst.MessageQueue @ [Demanded (agent.ID,r,inst.ID)]  
+    | false -> printfn "member %s is not empowered to demand %i from inst %s" agent.Name r inst.Name       
 
 let powToAllocate head inst agent =
     let a = agent.ID
@@ -209,16 +206,12 @@ let powToVote agent inst =
     not (List.contains false checkCritLst) 
 
 let doVote agent inst vote = 
-    let voteRes = 
-        match (powToVote agent inst) with
-        | true -> 
-            sendMessage (Some (VotedRaMeth(agent.ID))) inst
-            Some (Vote(vote, inst.ID))
-        | false -> 
-            printfn "%s cannot vote on issue" agent.Name 
-            None
-    sendMessage voteRes inst    
-
+    match (powToVote agent inst) with
+    | true ->
+        // printfn "agent %s has voted in inst %s" agent.Name inst.Name
+        inst.MessageQueue <- inst.MessageQueue @ [VotedRaMeth(agent.ID); Vote(vote, inst.ID)]
+    | false -> printfn "agent %s cannot vote on issue in inst %s" agent.Name inst.Name   
+ 
 let powToDeclare head inst = 
     let checkCritLst = [head.RoleOf = Some(Head(inst.ID)) ; not inst.IssueStatus]
     not (List.contains false checkCritLst)
@@ -319,11 +312,16 @@ let powToAppeal agent s inst =
     not (List.contains false checkCritLst)
 
 let appealSanction agent s inst = 
-    let appealRes = 
-        match powToAppeal agent s inst with
-        | true -> Some (Appeal(agent.ID,s,inst.ID))
-        | false -> None
-    sendMessage appealRes inst    
+    match powToAppeal agent s inst with
+    | true -> 
+        printfn "member %s appealed to inst %s for sanction level %i" agent.Name inst.Name s
+        inst.MessageQueue <- inst.MessageQueue @ [Appeal(agent.ID,s,inst.ID)]
+    | false -> printfn "member %s failed to appeal to inst %s for sanction level %i" agent.Name inst.Name s    
+    // let appealRes = 
+    //     match powToAppeal agent s inst with
+    //     | true -> Some (Appeal(agent.ID,s,inst.ID))
+    //     | false -> None
+    // sendMessage appealRes inst    
 
 let powToUphold head agent s inst = 
     let checkCritLst = [head.RoleOf = Some (Head inst.ID); checkFromQ inst (Appeal(agent.ID,s,inst.ID)) true]
@@ -333,7 +331,8 @@ let upholdAppeal head agent s inst =
     if powToUphold head agent s inst then
         agent.SanctionLevel <- agent.SanctionLevel - 1
         agent.OffenceLevel <- agent.OffenceLevel - 1
-        printfn "head %s has decremented the sanctions and offence of member %s in inst %s to %i and %i" head.Name agent.Name inst.Name agent.SanctionLevel agent.OffenceLevel
+        printfn "head %s in inst %s has decremented the following in member %s:" head.Name inst.Name agent.Name
+        printfn "sanctions to %i, offence to %i" agent.SanctionLevel agent.OffenceLevel
     else
         printfn "head %s is not empowered to uphold appeal of member %s in inst %s" head.Name agent.Name inst.Name
         

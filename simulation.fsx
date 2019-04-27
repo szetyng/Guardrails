@@ -49,6 +49,7 @@ let simulate agents time tmax =
             (mem, i, r)
 
         // P2: Members of institutions make demands
+        printfn "members of institutions are making their demands"
         regHolons
         |> List.filter (fun h -> checkRole h "Member")
         |> List.map (tripleMemInstR >> (fun (h,i,r) -> demandResources h r i time))
@@ -56,7 +57,6 @@ let simulate agents time tmax =
 
         let pairHeadInst head = 
             let i = getSupra head
-            printfn "Head: %s, inst: %s" head.Name i.Name
             (head, i)
 
         // P2: Heads of institutions allocate demands
@@ -69,11 +69,15 @@ let simulate agents time tmax =
             (mem, i)
 
         // P2: Members of institutions make appropriations
+        printfn "all members are making appropriations"
         regHolons
         |> List.filter (fun h -> checkRole h "Member")
         |> List.map (doubleMemInst >> (fun (m,i) -> (m,i,(decideOnR m i))) >> (fun (m,i,r) -> appropriateResources m i r))
         |> ignore
 
+        supraHolons
+        |> List.map (fun inst -> printfn "inst %s now has %i amount of resources" inst.Name inst.Resources)
+        |> ignore
         // P3: Heads decide if they want to open vote or not
 
 
@@ -81,6 +85,8 @@ let simulate agents time tmax =
         supraHolons
         |> List.map (fun inst -> inst.Resources <- inst.Resources + 300)
         |> ignore
+
+        printfn ""
 
         match time with
         | t when t=tmax -> ()

@@ -42,6 +42,7 @@ let gatekeepChecksExclude gatekeep inst agents =
 //************************* Principle 2 *********************************/
 /// Sends multiple Allocated message to inst's MessageQueue
 let allocateAllResources head inst agents = 
+    printfn "head %s is allocating resources to members in inst %s according to the protocol" head.Name inst.Name
     let allocateResources mem = 
         let memHolon = getHolon agents mem
 
@@ -52,7 +53,7 @@ let allocateAllResources head inst agents =
         
         match demandedR, memHolon with
         | 0, Some m -> printfn "head %s cannot allocate resources to %s in inst %s" head.Name m.Name inst.Name
-        | x, Some m -> sendMessage (Some (Allocated(m.ID,x,inst.ID))) inst
+        | x, Some m -> inst.MessageQueue <- inst.MessageQueue @ [Allocated(m.ID,x,inst.ID)]
         | _, None -> printfn "Holon not found"
 
     let allocateFromDemand msg =
@@ -68,21 +69,32 @@ let allocateAllResources head inst agents =
 /// Move r resources from inst to agent, if available
 /// Sends Appropriated message to inst's MessageQueue
 /// TODO: agent decides what r is, from Allocated or from greed
-/// TODO: rewrite, don't send appropriation message if x = 0
+/// does not send appropriation message if x = 0
 let appropriateResources agent inst r = 
     let pool = inst.Resources
     let own = agent.Resources
-    let appropriatedR = 
-        if pool>=r then 
-            inst.Resources <- pool - r
-            agent.Resources <- own + r
-            r
-        else
-            inst.Resources <- 0
-            agent.Resources <- own + pool
-            pool
-    printfn "inst %s resources went from %i to %i, member %s resources went from %i to %i" inst.Name pool inst.Resources agent.Name own agent.Resources                
-    sendMessage (Some (Appropriated(agent.ID, appropriatedR, inst.ID))) inst        
+    match pool with
+    | poo when poo=0 -> ()
+    | poo when poo>=r -> 
+        inst.Resources <- poo - r
+        agent.Resources <- own + r
+        inst.MessageQueue <- inst.MessageQueue @ [Appropriated(agent.ID,r,inst.ID)]
+    | poo -> 
+        inst.Resources <- 0
+        agent.Resources <- own + poo 
+        inst.MessageQueue <- inst.MessageQueue @ [Appropriated(agent.ID,poo,inst.ID)]
+            
+    // let appropriatedR = 
+    //     if pool>=r then 
+    //         inst.Resources <- pool - r
+    //         agent.Resources <- own + r
+    //         r
+    //     else
+    //         inst.Resources <- 0
+    //         agent.Resources <- own + pool
+    //         pool
+    // printfn "inst %s resources went from %i to %i, member %s resources went from %i to %i" inst.Name pool inst.Resources agent.Name own agent.Resources                
+    // sendMessage (Some (Appropriated(agent.ID, appropriatedR, inst.ID))) inst        
 
 //************************* Principle 3 *********************************/
 /// Sets IssueStatus of inst to true
