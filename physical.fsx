@@ -7,7 +7,7 @@ open Platform
 //************************* Misc *********************************/
 let refillResources inst r = 
     inst.Resources <- inst.Resources + r
-    printfn "inst has refilled its resources by %i to %i" r inst.Resources
+    printfn "inst %s has refilled its resources by %i to %i" inst.Name r inst.Resources
 
 //************************* Principle 1 *********************************/
 /// Gatekeeper checks for applications
@@ -42,7 +42,6 @@ let gatekeepChecksExclude gatekeep inst agents =
 //************************* Principle 2 *********************************/
 /// Sends multiple Allocated message to inst's MessageQueue
 let allocateAllResources head inst agents = 
-    printfn "head %s is allocating resources to members in inst %s according to the protocol" head.Name inst.Name
     let allocateResources mem = 
         let memHolon = getHolon agents mem
 

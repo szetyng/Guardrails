@@ -38,48 +38,77 @@ let simulate agents time tmax =
 
     let rec runSimulate time =
         printfn "t=%i" time
+
+        /// Make tuple of mem and the supra-inst it belongs to
+        let doubleMemInst mem = 
+            let i = getSupra mem
+            (mem, i)      
+
+        /// Make tuple of inst and the amount to refill
+        let doubleInstRefill inst = 
+            let r = decideOnRefill inst
+            (inst,r)      
+
+        let doubleHeadInst inst =   
+            let headd = 
+                heads
+                |> List.find (fun head -> (getSupra head)=inst) 
+            (headd,inst)       
+            
+        let allMembersMakeDemands memberLst = 
+            memberLst   
+            |> List.filter (fun h -> checkRole h "Member")
+            |> List.map (doubleMemInst >> (fun (h,i) -> demandResources h (decideOnDemandR h i) i time))
+            |> ignore
+          
+        let allMembersAppropriate memberLst = 
+            memberLst
+            |> List.filter (fun h -> checkRole h "Member")
+            |> List.map (doubleMemInst >> (fun (m,i) -> appropriateResources m i (decideOnAppropriateR m i)))
+            |> ignore   
+
+        let allHeadsAllocate heads = 
+            let headAllocatesToInst headInst =
+                let head, inst = headInst
+                printfn "head %s is allocating resources to members in inst %s according to the protocol" head.Name inst.Name
+                allocateAllResources head inst agents
+            heads
+            |> List.map (doubleMemInst >> headAllocatesToInst)       
+            |> ignore     
+
+
+        let principle2 memberLst heads = 
+            allMembersMakeDemands memberLst
+            allHeadsAllocate heads
+
+            printfn "members are making appropriations"
+            allMembersAppropriate memberLst
+
+            supraHolons
+            |> List.map (fun inst -> printfn "inst %s now has %i amount of resources" inst.Name inst.Resources)
+            |> ignore
+                    
+
         // P1: Gatekeeper checks for members to be kicked out
         gatekeepers
         |> List.map (fun g -> gatekeepChecksExclude g (getSupra g) agents)
         |> ignore
-      
-        let doubleMemInst mem = 
-            let i = getSupra mem
-            (mem, i)
 
         // P2: Members of institutions make demands
-        printfn "members of institutions are making their demands"
-        regHolons
-        |> List.filter (fun h -> checkRole h "Member")
-        |> List.map (doubleMemInst >> (fun (h,i) -> demandResources h (decideOnDemandR h i) i time))
-        |> ignore
+        printfn "all members at the base level are making demands"
+        principle2 regHolons heads
 
-        let pairHeadInst head = 
-            let i = getSupra head
-            (head, i)
-
-        // P2: Heads of institutions allocate demands
-        heads
-        |> List.map (pairHeadInst >> (fun (h,i) -> allocateAllResources h i agents))
-        |> ignore
-
-        // P2: Members of institutions make appropriations
-        printfn "all members are making appropriations"
-        regHolons
-        |> List.filter (fun h -> checkRole h "Member")
-        |> List.map (doubleMemInst >> (fun (m,i) -> (m,i,(decideOnAppropriateR m i))) >> (fun (m,i,r) -> appropriateResources m i r))
-        |> ignore
-
+        // P2 & P8: Holons at the middle hierarchy are making demands
+        printfn "supra-holons in the middle hierarchy are making demands"
+        principle2 supraHolons heads
+  
+        // Refill top institution
         supraHolons
-        |> List.map (fun inst -> printfn "inst %s now has %i amount of resources" inst.Name inst.Resources)
+        |> List.filter (fun h -> checkRole h "None")
+        |> List.map (doubleInstRefill >> (fun (inst,r) -> refillResources inst r))
         |> ignore
-        
 
 
-        // REFILL
-        supraHolons
-        |> List.map (fun inst -> inst.Resources <- inst.Resources + 300)
-        |> ignore
 
         // P3: Heads decide if they want to open vote or not
         // AFTER refill is done

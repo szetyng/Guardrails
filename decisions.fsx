@@ -6,6 +6,9 @@ open Holon
 open Platform
 open Physical
 
+//************************* Misc *********************************/
+let decideOnRefill inst = 100
+
 //************************* Principle 2 *********************************/
 // TODO: head to change ramethod based on level of resources in the inst
 
@@ -13,5 +16,8 @@ open Physical
 let decideOnDemandR agent inst = 2
 
 // TODO: agent decides what r is, from Allocated or from greed
-let decideOnAppropriateR agent inst = 25
+let decideOnAppropriateR agent inst = 
+    let max = agent.ResourceCap
+    max/2
+
     

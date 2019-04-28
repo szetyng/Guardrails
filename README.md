@@ -11,7 +11,8 @@
 - [ ] feedback stuff, propensity to cheat stuff, revise behaviour stuff -> parameters to the physical functions
   - [ ] appropriation of resources takes in `r` amount of resources as an argument. Make this `r` decision here
   - [ ] when resources dwindle, call vote on changing stuff
-- [ ] make a script only for initialisation of agents (makes it easier when you change stuff like record properties)
+- [x] make a script only for initialisation of agents (makes it easier when you change stuff like record properties)
+- [x] only the top hierarchy refills, the middle hierarchy appropriates from them!
 
 ## Notes
 - for some of the principles, work out if 'agent has to be a member of the institution' means `agent.RoleOf = Member` or as long as agent holds is in the institution, whether as Member, Monitor, Gatekeepr or Head.
@@ -277,7 +278,9 @@ Initially, the supra-holon at the highest hierarchy will have 500 resources whil
 
 In this experiment, `parks` and `brooklyn` have 9 members each (people in power do not make demands), and each member would demand for 10 resources in each time slice. Thus, at the end of the time slice, the supra-holon will only have 110 resources left if each member appropriates 10 resources each. 
 
-The resources are refilled, near the end of each time slice (after appropriation of resources and paying the monitor). The `Head` of each supra-holon will then decide whether or not they would want to call for a vote on changing the resource allocation method - based on the amount of resources left (and the refill that the institution will be getting for the next time slice - this was before I decided to change the refill timing).
+In accordance to principle 8, `parks` and `brooklyn` are also empowered to make demands to `offices`. The resources of the top-most supra-holon, i.e. `offices`, are refilled near the end of each time slice (after appropriation of resources and paying the monitor).
+
+The `Head` of each supra-holon (`parks`, `brooklyn` and `offices`) will then decide whether or not they would want to call for a vote on changing the resource allocation method - based on the amount of resources left. This kicks off principle 3.
 
 In every time slice, the resources can be refilled at either high, medium or low levels (not exceeding their maximum capacity, of course). The experiment will go on for 50 time slices; the refill rate will be changed in blocks of 5 time slices, so it changes 10 times in this repeating sequence: high, high, medium, low.    
 
