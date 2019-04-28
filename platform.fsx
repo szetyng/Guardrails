@@ -156,7 +156,7 @@ let demandResources agent r inst t =
     | true -> 
         // printfn "member %s demanded %i from inst %s" agent.Name r inst.Name 
         inst.MessageQueue <- inst.MessageQueue @ [Demanded (agent.ID,r,inst.ID)]  
-    | false -> printfn "member %s is not empowered to demand %i from inst %s" agent.Name r inst.Name       
+    | false -> printfn "member %s is not empowered to demand %f from inst %s" agent.Name r inst.Name       
 
 let powToAllocate head inst agent =
     let a = agent.ID
@@ -175,18 +175,18 @@ let powToAllocate head inst agent =
                 checkFromQ inst (Demanded(aID, r, iID)) true |> ignore
                 if r<=inst.Resources then r
                 else if r>inst.Resources then inst.Resources
-                else 0
-            else 0
+                else 0.0
+            else 0.0
         | Some (Ration (Some rPrime)), Demanded(aID, r, iID)::_ ->
             if aID=a && iID=i then
                 checkFromQ inst (Demanded(aID, r, iID)) true |> ignore
                 if r<=rPrime && r<=inst.Resources then r
                 else if r>rPrime && rPrime<=inst.Resources then rPrime
                 else if r>rPrime && rPrime>inst.Resources then inst.Resources 
-                else 0
-            else 0
-        | _ , _ -> 0     
-    else 0       
+                else 0.0
+            else 0.0
+        | _ , _ -> 0.0     
+    else 0.0       
 
 
 //************************* Principle 3 *********************************/
@@ -278,7 +278,7 @@ let reportGreed monitor agent inst =
                 if mem=a && ins=i then x
                 else getAllocatedR rest
             | _::rest -> getAllocatedR rest
-            | [] -> 0
+            | [] -> 0.0
         getAllocatedR inst.MessageQueue 
     let appropriatedR =
         let rec getAppropriatedR lst = 
@@ -287,7 +287,7 @@ let reportGreed monitor agent inst =
                 if mem=a && ins=i then x
                 else getAppropriatedR rest
             | _::rest -> getAppropriatedR rest
-            | [] -> 0
+            | [] -> 0.0
         getAppropriatedR inst.MessageQueue
     if appropriatedR>allocatedR && powToReport monitor agent inst then
         agent.OffenceLevel <- agent.OffenceLevel + 1

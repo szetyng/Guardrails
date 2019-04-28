@@ -10,18 +10,18 @@ type RoleIn =
 
 type ResAllocMethod = 
     | Queue
-    | Ration of int option
+    | Ration of float option
 
 type WinDetMethod = 
     | Plurality 
 
 type MessageType = 
     | Applied of HolonID * HolonID              // Applied(Agent, Inst) TODO: is inst nec if it is being sent to inst?
-    | Demanded of HolonID * int * HolonID       // Demanded(Agent, Resources, Inst)
-    | Allocated of HolonID * int * HolonID      // Allocated(Agent, Resources, Inst)
+    | Demanded of HolonID * float * HolonID       // Demanded(Agent, Resources, Inst)
+    | Allocated of HolonID * float * HolonID      // Allocated(Agent, Resources, Inst)
     | Vote of ResAllocMethod * HolonID          // VoteRaMeth(raMethod, Inst)          
     | VotedRaMeth of HolonID                    // VotedRaMeth(Agent) 
-    | Appropriated of HolonID * int * HolonID    // Appropriate(Agent, Resources, Inst)
+    | Appropriated of HolonID * float * HolonID    // Appropriate(Agent, Resources, Inst)
     | Appeal of HolonID * int * HolonID         // Appeal(Agent, SanctionLevel, Inst)
 
 type Holon =
@@ -29,8 +29,8 @@ type Holon =
         // Common to every holon
         ID : HolonID;
         Name : string;
-        mutable Resources : int;
-        ResourceCap : int;
+        mutable Resources : float;
+        ResourceCap : float;
         mutable MessageQueue : MessageType list;
 
         // For sub-holons        
@@ -44,7 +44,7 @@ type Holon =
         mutable RaMethod : ResAllocMethod option;
         mutable WdMethod : WinDetMethod option;
         MonitoringFreq : float;
-        MonitoringCost : int;
+        MonitoringCost : float;
         mutable IssueStatus : bool
     }
 

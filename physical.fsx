@@ -6,8 +6,14 @@ open Platform
 
 //************************* Misc *********************************/
 let refillResources inst r = 
-    inst.Resources <- inst.Resources + r
-    printfn "inst %s has refilled its resources by %i to %i" inst.Name r inst.Resources
+    let max = inst.ResourceCap
+    match r with
+    | refill when refill>=max -> 
+        inst.Resources <- max
+        printfn "inst %s has refilled its resources to the max: %f" inst.Name inst.Resources
+    | refill -> 
+        inst.Resources <- inst.Resources + refill
+        printfn "inst %s has refilled its resources by %f to %f" inst.Name refill inst.Resources
 
 //************************* Principle 1 *********************************/
 /// Gatekeeper checks for applications
@@ -48,10 +54,10 @@ let allocateAllResources head inst agents =
         let demandedR =
             match memHolon with
             | Some m -> powToAllocate head inst m 
-            | None -> 0
+            | None -> 0.0
         
         match demandedR, memHolon with
-        | 0, Some m -> printfn "head %s cannot allocate resources to %s in inst %s" head.Name m.Name inst.Name
+        | 0.0, Some m -> printfn "head %s cannot allocate resources to %s in inst %s" head.Name m.Name inst.Name
         | x, Some m -> inst.MessageQueue <- inst.MessageQueue @ [Allocated(m.ID,x,inst.ID)]
         | _, None -> printfn "Holon not found"
 
@@ -73,13 +79,13 @@ let appropriateResources agent inst r =
     let pool = inst.Resources
     let own = agent.Resources
     match pool with
-    | poo when poo=0 -> ()
+    | poo when poo=0.0 -> ()
     | poo when poo>=r -> 
         inst.Resources <- poo - r
         agent.Resources <- own + r
         inst.MessageQueue <- inst.MessageQueue @ [Appropriated(agent.ID,r,inst.ID)]
     | poo -> 
-        inst.Resources <- 0
+        inst.Resources <- 0.0
         agent.Resources <- own + poo 
         inst.MessageQueue <- inst.MessageQueue @ [Appropriated(agent.ID,poo,inst.ID)]
             
@@ -145,11 +151,11 @@ let monitorDoesJob monitor inst agents =
     | tot when tot >= cost -> 
         inst.Resources <- pool - cost
         monitor.Resources <- initMonitorAmt + cost        
-        printfn "Monitor is checking for misbehavior, is paid %i to get total of %i; inst amount decreased to %i" cost monitor.Resources inst.Resources    
+        printfn "Monitor is checking for misbehavior, is paid %f to get total of %f; inst amount decreased to %f" cost monitor.Resources inst.Resources    
         inst.MessageQueue
         |> List.map checkGreed 
         |> ignore
-    | _ -> printfn "Inst has %i resources, not enough to pay %i for monitoring" cost pool
+    | _ -> printfn "Inst has %f resources, not enough to pay %f for monitoring" cost pool
 
 //************************* Principle 5 *********************************/
 /// Head goes through all the agents in inst and corrects SanctionLevel 

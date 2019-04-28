@@ -8,7 +8,7 @@ open Platform
 open Physical
 open Decisions
 
-let simulate agents time tmax = 
+let simulate agents time tmax refillRate = 
     let supraHolons = 
         List.map getSupraID agents
         |> List.distinct
@@ -36,7 +36,7 @@ let simulate agents time tmax =
     printfn "Monitors are:"
     List.map (fun x -> printfn "%s" x.Name) monitors |> ignore 
 
-    let rec runSimulate time =
+    let rec runSimulate time state =
         printfn "t=%i" time
 
         /// Make tuple of mem and the supra-inst it belongs to
@@ -46,15 +46,9 @@ let simulate agents time tmax =
 
         /// Make tuple of inst and the amount to refill
         let doubleInstRefill inst = 
-            let r = decideOnRefill inst
+            let r = decideOnRefill inst time refillRate
             (inst,r)      
 
-        let doubleHeadInst inst =   
-            let headd = 
-                heads
-                |> List.find (fun head -> (getSupra head)=inst) 
-            (headd,inst)       
-            
         let allMembersMakeDemands memberLst = 
             memberLst   
             |> List.filter (fun h -> checkRole h "Member")
@@ -85,7 +79,7 @@ let simulate agents time tmax =
             allMembersAppropriate memberLst
 
             supraHolons
-            |> List.map (fun inst -> printfn "inst %s now has %i amount of resources" inst.Name inst.Resources)
+            |> List.map (fun inst -> printfn "inst %s now has %f amount of resources" inst.Name inst.Resources)
             |> ignore
                     
 
@@ -117,6 +111,15 @@ let simulate agents time tmax =
         // newline to separate time slices printing
         printfn ""
         match time with
-        | t when t=tmax -> ()
-        | t -> runSimulate (t+1)
-    runSimulate time    
+        | t when t=tmax -> state
+        | t -> 
+            let updateState insts old =
+                let ind,oldState = old
+                let supra = (getHolon insts ind).Value 
+                (ind, oldState @ [supra.Resources])
+            let newState = List.map (updateState supraHolons) state             
+            runSimulate (t+1) newState
+            
+    // include ID to be safe
+    let initState = List.map (fun inst -> (inst.ID, [inst.Resources])) supraHolons
+    runSimulate time initState 

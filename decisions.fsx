@@ -6,18 +6,31 @@ open Holon
 open Platform
 open Physical
 
+type Rate = High | Medium | Low
+
 //************************* Misc *********************************/
-let decideOnRefill inst = 100
+/// refillRate example: [High;High;Medium;Low]
+let decideOnRefill inst time refillRate = 
+    let nrOfSeasons = List.length refillRate 
+    let timeBlock = time/5
+    let seasonInd = timeBlock%nrOfSeasons // which season are we in
+    let season = refillRate.[seasonInd] 
+
+    let max = inst.ResourceCap
+   
+    match season with
+    | High -> max
+    | Medium -> 0.5*max
+    | Low -> 0.25*max    
 
 //************************* Principle 2 *********************************/
 // TODO: head to change ramethod based on level of resources in the inst
 
 // TODO: agent decides on how to demand for r
-let decideOnDemandR agent inst = 2
+let decideOnDemandR agent inst = 2.0
 
 // TODO: agent decides what r is, from Allocated or from greed
 let decideOnAppropriateR agent inst = 
     let max = agent.ResourceCap
-    max/2
+    max/2.0
 
-    
