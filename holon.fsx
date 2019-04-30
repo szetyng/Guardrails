@@ -38,6 +38,8 @@ type Holon =
         CompliancyDegree : float;
         mutable SanctionLevel : int;
         mutable OffenceLevel : int;
+        Greediness : float;
+        RiskTolerance : float;
 
         // For supra-holons
         SanctionLimit : int;

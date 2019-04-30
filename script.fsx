@@ -12,5 +12,5 @@ open Decisions
 open Simulation
 open Initialisation
 
-simulate allAgents 0 5 [High;Medium;Low]
+simulate allAgents 0 5 [Low;Medium;High]
 

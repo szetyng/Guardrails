@@ -52,7 +52,7 @@ let simulate agents time tmax refillRate =
         let allMembersMakeDemands memberLst = 
             memberLst   
             |> List.filter (fun h -> checkRole h "Member")
-            |> List.map (doubleMemInst >> (fun (h,i) -> demandResources h (decideOnDemandR h i) i time))
+            |> List.map (doubleMemInst >> (fun (h,i) -> demandResources h (decideOnDemandR h ) i time))
             |> ignore
           
         let allMembersAppropriate memberLst = 

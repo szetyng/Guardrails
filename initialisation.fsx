@@ -27,6 +27,8 @@ let def =
         IssueStatus = false;
         SanctionLimit = 2;
         ResourceCap = 500;
+        Greediness = 0.5;
+        RiskTolerance = 0.5;
     }
 
 let parksNames = 
@@ -57,8 +59,8 @@ let initMemberAgents nameLst inst currID initRes resMax =
 let offices = {createAgent "offices" 0 500 500 with RaMethod=Some Queue; WdMethod=Some Plurality}
 let mike = {createAgent "mike" 1 0 200 with RoleOf=Some(Head(offices.ID))}
 let dan = {createAgent "dan" 2 0 200 with RoleOf=Some(Monitor(offices.ID))}
-let parks = {createAgent "parks" 3 200 200 with RoleOf=Some (Member(offices.ID)); RaMethod=Some Queue; WdMethod=Some Plurality}
-let brooklyn = {createAgent "brooklyn" 4 200 200 with RoleOf=Some (Member(offices.ID)); RaMethod=Some (Ration(Some 20)); WdMethod=Some Plurality}
+let parks = {createAgent "parks" 3 200 200 with RoleOf=Some (Member(offices.ID)); RaMethod=Some Queue; WdMethod=Some Plurality; Greediness=0.75}
+let brooklyn = {createAgent "brooklyn" 4 200 200 with RoleOf=Some (Member(offices.ID)); RaMethod=Some (Ration(Some 20)); WdMethod=Some Plurality; Greediness=0.75}
 
 let initParksPositions = 
     let ron = {createAgent "ron" 5 0 20 with RoleOf=Some (Head(parks.ID))}

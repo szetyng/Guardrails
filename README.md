@@ -252,10 +252,10 @@ TODO:
 - [ ] p6: how does agent decide if they want to appeal? Probably similar to compliancy in p2
 
 ### P2: how does agent decide how much to demand?
-- base holons: always demand half of capacity
-- intermediary holons: always demand 0.75 of capacity
-
-
+- Greedy: if greediness value is larger than 0.5 -> demand for 0.75 of capacity
+- Not greedy: if greediness value is less than or equal to 0.5 -> demand for half of capacity
+- base holons are mostly not greedy
+- all intermediary holons are greedy to be safe
 
 **Maybe todo, maybe simplify**
 - [ ] p1: how does homeless agent decide to apply or not? 
