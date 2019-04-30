@@ -36,6 +36,8 @@ let simulate agents time tmax refillRate =
     printfn "Monitors are:"
     List.map (fun x -> printfn "%s" x.Name) monitors |> ignore 
 
+    printNames regHolons
+
     let rec runSimulate time state =
         printfn "t=%i" time
 
@@ -92,21 +94,59 @@ let simulate agents time tmax refillRate =
         printfn "all members at the base level are making demands"
         principle2 regHolons heads
 
+        // P4: Monitoring
+
+        // P3: Heads decide if they want to open vote or not
+        let openElections = 
+            heads
+            |> List.map doubleMemInst
+            |> List.filter (fun (_,i) -> not (checkRole i "None")) // only for intermediary holons
+            |> List.filter (fun (_,i) -> decideElection 0.25 0.75 i)
+        if List.isEmpty openElections then ()  
+        else 
+            openElections
+            |> List.map (fun (h,i) -> openIssue h i)
+            |> ignore        
+
+            // P3: All agents are allowed to vote if the issue is open in their inst
+            let voteIfOpen electionLst (mem, inst) = 
+                let isOpen = List.tryFind (fun (_,i) -> i=inst) electionLst
+                match isOpen with
+                | Some (_) -> doVote mem inst (decideVote mem)
+                | None -> ()
+            regHolons
+            |> List.filter (fun h -> checkRole h "Member")
+            |> List.map (doubleMemInst >> voteIfOpen openElections) 
+            |> ignore  
+
+            // P3: Heads count votes and close the issue
+            let checkIfNeedRationAmt inst =   
+                match inst.RaMethod with
+                | Some (Ration(None)) -> 
+                    let ration = inst.Resources / 9 // TODO: divide by number of members
+                    inst.RaMethod <- Some (Ration(Some ration))
+                | _ -> ()                         
+            openElections
+            |> List.map 
+                (fun (h,i) -> 
+                    closeIssue h i
+                    declareWinner h i
+                    checkIfNeedRationAmt i)
+            |> ignore
+
+
+
         // P2 & P8: Holons at the middle hierarchy are making demands
         printfn "supra-holons in the middle hierarchy are making demands"
         principle2 supraHolons heads
-  
+
         // Refill top institution
         supraHolons
         |> List.filter (fun h -> checkRole h "None")
         |> List.map (doubleInstRefill >> (fun (inst,r) -> refillResources inst r))
         |> ignore
 
-
-
-        // P3: Heads decide if they want to open vote or not
-        // AFTER refill is done
-
+   
 
         // newline to separate time slices printing
         printfn ""

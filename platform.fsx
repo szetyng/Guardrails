@@ -238,8 +238,11 @@ let declareWinner head inst =
             getVotes inst.MessageQueue []
         printfn "votelist: %A" votelist        
         let winner =         
-            match inst.WdMethod with
-            | Some Plurality -> Some (countVotesPlurality votelist)     
+            match inst.WdMethod, votelist with
+            | _, [] -> 
+                printfn "Error: No one voted"
+                None
+            | Some Plurality, vLst -> Some (countVotesPlurality vLst)     
             | _ -> 
                 printfn "Winner declaration method is %A, not usable" inst.WdMethod
                 None

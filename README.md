@@ -13,6 +13,7 @@
   - [ ] when resources dwindle, call vote on changing stuff
 - [x] make a script only for initialisation of agents (makes it easier when you change stuff like record properties)
 - [x] only the top hierarchy refills, the middle hierarchy appropriates from them!
+- [ ] Clear all `VotedRaMeth(agent.ID)` messages after issue is closed
 
 ## Notes
 - for some of the principles, work out if 'agent has to be a member of the institution' means `agent.RoleOf = Member` or as long as agent holds is in the institution, whether as Member, Monitor, Gatekeepr or Head.
@@ -242,12 +243,14 @@ TODO:
 
 ## Decision-making abilities of agents
 **Todo**
-- [ ] p2: how does agent decide how much to demand?
+- [x] p2: how does agent decide how much to demand?
 - [ ] p2: how does agent decide how much to appropriate? According to allocation, or according to greedy wants?
-- [ ] p3: how does head decide to open issue?
+- [x] p3: how does head decide to open issue?
   - for now: when resource level <= `k * resources`. `k` is a percentage that represents safety margin of the institution
-- [ ] p3: how does agent decide on which `raMethod` to vote for?
+- [ ] p3: how does head of top holon decide to open issue?
+- [x] p3: how does agent decide on which `raMethod` to vote for?
 - [ ] p3: if Ration wins, how does Head decide on what R to use. Something that works in tandem with `declareWinner`?
+  - [ ] count number of members in an inst so that we can divide stuff
 - [ ] p4: monitor decides whether or not it wants to do its job -> if random number <= monitoring freq, where freq is in range (0,1)
 - [ ] p6: how does agent decide if they want to appeal? Probably similar to compliancy in p2
 
@@ -256,6 +259,19 @@ TODO:
 - Not greedy: if greediness value is less than or equal to 0.5 -> demand for half of capacity
 - base holons are mostly not greedy
 - all intermediary holons are greedy to be safe
+
+### P3 
+How does head decide if they should open the issue for voting? Only for intermediary holons
+- open issue if `resources <= tMin*capacity` or `resources >= tMax*capacity`
+- for now, `tMin=0.25` and `tMax=0.75` for intermediary holons
+
+How does agent decide on which raMethod to vote for?
+- for now, if `resources > 0.4*capacity`, then vote for Queue
+- else, Ration
+
+How does head decide the amount to ration if Ration wins?
+- `resources/nrOfMembers`, except that `nrOfMembers is temporarily fixed as 9 at the moment
+
 
 **Maybe todo, maybe simplify**
 - [ ] p1: how does homeless agent decide to apply or not? 
@@ -286,7 +302,7 @@ In this experiment, `parks` and `brooklyn` have 9 members each (people in power 
 
 In accordance to principle 8, `parks` and `brooklyn` are also empowered to make demands to `offices`. The resources of the top-most supra-holon, i.e. `offices`, are refilled near the end of each time slice (after appropriation of resources and paying the monitor).
 
-The `Head` of each supra-holon (`parks`, `brooklyn` and `offices`) will then decide whether or not they would want to call for a vote on changing the resource allocation method - based on the amount of resources left. This kicks off principle 3.
+The `Head` of each supra-holon (`parks`, `brooklyn` and `offices`) will then decide whether or not they would want to call for a vote on changing the resource allocation method - based on the amount of resources left. This kicks off principle 3. Principle 3 starts after members have made appropriations and after monitoring is done, BEFORE the institution is refilled, and before the intermediary holons make their appropriations.
 
 In every time slice, the resources can be refilled at either high, medium or low levels (not exceeding their maximum capacity, of course). The experiment will go on for 50 time slices; the refill rate will be changed in blocks of 5 time slices, so it changes 10 times in this repeating sequence: high, high, medium, low.    
 
