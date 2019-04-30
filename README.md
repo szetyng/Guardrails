@@ -242,7 +242,7 @@ TODO:
 
 ## Decision-making abilities of agents
 **Todo**
-- [*] p2: how does agent decide how much to demand? Static - each agent always demands for 10.
+- [ ] p2: how does agent decide how much to demand?
 - [ ] p2: how does agent decide how much to appropriate? According to allocation, or according to greedy wants?
 - [ ] p3: how does head decide to open issue?
   - for now: when resource level <= `k * resources`. `k` is a percentage that represents safety margin of the institution
@@ -250,6 +250,12 @@ TODO:
 - [ ] p3: if Ration wins, how does Head decide on what R to use. Something that works in tandem with `declareWinner`?
 - [ ] p4: monitor decides whether or not it wants to do its job -> if random number <= monitoring freq, where freq is in range (0,1)
 - [ ] p6: how does agent decide if they want to appeal? Probably similar to compliancy in p2
+
+### P2: how does agent decide how much to demand?
+- base holons: always demand half of capacity
+- intermediary holons: always demand 0.75 of capacity
+
+
 
 **Maybe todo, maybe simplify**
 - [ ] p1: how does homeless agent decide to apply or not? 

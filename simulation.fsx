@@ -79,7 +79,7 @@ let simulate agents time tmax refillRate =
             allMembersAppropriate memberLst
 
             supraHolons
-            |> List.map (fun inst -> printfn "inst %s now has %f amount of resources" inst.Name inst.Resources)
+            |> List.map (fun inst -> printfn "inst %s now has %i amount of resources" inst.Name inst.Resources)
             |> ignore
                     
 

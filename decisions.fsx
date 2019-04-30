@@ -20,17 +20,21 @@ let decideOnRefill inst time refillRate =
    
     match season with
     | High -> max
-    | Medium -> 0.5*max
-    | Low -> 0.25*max    
+    | Medium -> 
+        let rFloat = 0.5*float(max)
+        int(rFloat)
+    | Low -> 
+        let rFloat = 0.25*float(max)
+        int(rFloat)    
 
 //************************* Principle 2 *********************************/
 // TODO: head to change ramethod based on level of resources in the inst
 
 // TODO: agent decides on how to demand for r
-let decideOnDemandR agent inst = 2.0
+let decideOnDemandR agent inst = 2
 
 // TODO: agent decides what r is, from Allocated or from greed
 let decideOnAppropriateR agent inst = 
     let max = agent.ResourceCap
-    max/2.0
+    max/2
 
