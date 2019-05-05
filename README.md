@@ -266,8 +266,8 @@ How does head decide if they should open the issue for voting? Only for intermed
 - for now, `tMin=0.25` and `tMax=0.75` for intermediary holons
 
 How does agent decide on which raMethod to vote for?
-- for now, if `resources > 0.4*capacity`, then vote for Queue
-- else, Ration
+- Random
+- Scraped idea: if `resources > 0.4*capacity`, then vote for Queue. Else, Ration
 
 How does head decide the amount to ration if Ration wins?
 - `resources/nrOfMembers`, except that `nrOfMembers is temporarily fixed as 9 at the moment

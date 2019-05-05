@@ -1,5 +1,6 @@
 open System.Collections.Generic
 open System.Collections.Generic
+open System.Collections.Generic
 #load "holon.fsx"
 #load "platform.fsx"
 #load "physical.fsx"
@@ -8,6 +9,8 @@ open Platform
 open Physical
 
 type Rate = High | Medium | Low
+
+let rand = System.Random()
 
 //************************* Misc *********************************/
 /// refillRate example: [High;High;Medium;Low]
@@ -55,8 +58,18 @@ let decideElection tMin tMax inst =
     | _ -> false
 
 let decideVote agent = 
-    let res = float(agent.Resources)
-    let safety = 0.4*float(agent.ResourceCap)
-    match res with
-    | amt when amt>safety -> Queue
-    | _ -> Ration(None)
+    // let rand = System.Random()
+    let vote = rand.NextDouble()
+    match vote with
+    | x when x<0.5 -> 
+        printfn "%f" x
+        Queue
+    | x -> 
+        printfn "%f" x
+        Ration(None)
+
+    // let res = float(agent.Resources)
+    // let safety = 0.4*float(agent.ResourceCap)
+    // match res with
+    // | amt when amt>safety -> Queue
+    // | _ -> Ration(None)

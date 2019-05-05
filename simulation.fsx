@@ -18,13 +18,14 @@ let simulate agents time tmax refillRate =
     let heads = List.filter (fun h -> checkRole h "Head") agents    
     let gatekeepers = List.filter (fun g -> checkRole g "Gatekeeper") agents
     let monitors = List.filter (fun m -> checkRole m "Monitor") agents
-    let regHolons = 
+    let baseHolons = 
         agents
         |> List.except supraHolons
         |> List.except heads
         |> List.except gatekeepers
         |> List.except monitors
 
+    /// Unsafe version with no Option check
     let getSupra mem = (getSupraHolon mem supraHolons).Value
 
     printfn "Supra-holons are:"
@@ -34,9 +35,7 @@ let simulate agents time tmax refillRate =
     printfn "Gatekeepers are:"
     List.map (fun h -> printfn "%s" h.Name) gatekeepers |> ignore
     printfn "Monitors are:"
-    List.map (fun x -> printfn "%s" x.Name) monitors |> ignore 
-
-    printNames regHolons
+    List.map (fun x -> printfn "%s" x.Name) monitors |> ignore  
 
     let rec runSimulate time state =
         printfn "t=%i" time
@@ -51,94 +50,81 @@ let simulate agents time tmax refillRate =
             let r = decideOnRefill inst time refillRate
             (inst,r)      
 
-        let allMembersMakeDemands memberLst = 
-            memberLst   
-            |> List.filter (fun h -> checkRole h "Member")
-            |> List.map (doubleMemInst >> (fun (h,i) -> demandResources h (decideOnDemandR h ) i time))
-            |> ignore
-          
-        let allMembersAppropriate memberLst = 
-            memberLst
-            |> List.filter (fun h -> checkRole h "Member")
-            |> List.map (doubleMemInst >> (fun (m,i) -> appropriateResources m i (decideOnAppropriateR m i)))
-            |> ignore   
+        
+  
+                   
+        /// P1: Gatekeeper checks for members to be kicked out
+        let boundariesPrinciple agents gatekeeper =
+            let inst = getSupraHolon gatekeeper supraHolons
+            match inst with
+            | Some i -> gatekeepChecksExclude gatekeeper i agents 
+            | None -> printfn "cannot find supraholon of gatekeeper %s" gatekeeper.Name       
 
-        let allHeadsAllocate heads = 
-            let headAllocatesToInst headInst =
-                let head, inst = headInst
-                printfn "head %s is allocating resources to members in inst %s according to the protocol" head.Name inst.Name
-                allocateAllResources head inst agents
-            heads
-            |> List.map (doubleMemInst >> headAllocatesToInst)       
-            |> ignore     
-
-
-        let principle2 memberLst heads = 
-            allMembersMakeDemands memberLst
-            allHeadsAllocate heads
-
+        /// P2: Members of institutions make demands
+        let congruencePrinciple heads members = 
+            let makeDemand agent = 
+                match checkRole agent "Member", getSupraHolon agent supraHolons with
+                | true, Some i -> 
+                    demandResources agent (decideOnDemandR agent) i time
+                | _ -> ()            
+            let allocateDemands head = 
+                let inst = getSupraHolon head agents
+                match inst with
+                | Some i -> 
+                    printfn "head %s is allocating resources to members in inst %s according to the protocol" head.Name i.Name
+                    allocateAllResources head i agents
+                | None -> printfn "cannot find supraholon of head %s" head.Name            
+            let makeAppropriation agent = 
+                match checkRole agent "Member", getSupraHolon agent supraHolons with
+                | true, Some i -> appropriateResources agent i (decideOnAppropriateR agent i)
+                | _ -> ()
+            List.map makeDemand members |> ignore
+            List.map allocateDemands heads |> ignore
             printfn "members are making appropriations"
-            allMembersAppropriate memberLst
+            List.map makeAppropriation members |> ignore
 
             supraHolons
             |> List.map (fun inst -> printfn "inst %s now has %i amount of resources" inst.Name inst.Resources)
-            |> ignore
-                    
-
-        // P1: Gatekeeper checks for members to be kicked out
-        gatekeepers
-        |> List.map (fun g -> gatekeepChecksExclude g (getSupra g) agents)
-        |> ignore
-
-        // P2: Members of institutions make demands
-        printfn "all members at the base level are making demands"
-        principle2 regHolons heads
-
-        // P4: Monitoring
-
-        // P3: Heads decide if they want to open vote or not
-        let openElections = 
-            heads
-            |> List.map doubleMemInst
-            |> List.filter (fun (_,i) -> not (checkRole i "None")) // only for intermediary holons
-            |> List.filter (fun (_,i) -> decideElection 0.25 0.75 i)
-        if List.isEmpty openElections then ()  
-        else 
-            openElections
-            |> List.map (fun (h,i) -> openIssue h i)
             |> ignore        
 
-            // P3: All agents are allowed to vote if the issue is open in their inst
-            let voteIfOpen electionLst (mem, inst) = 
-                let isOpen = List.tryFind (fun (_,i) -> i=inst) electionLst
-                match isOpen with
-                | Some (_) -> doVote mem inst (decideVote mem)
-                | None -> ()
-            regHolons
-            |> List.filter (fun h -> checkRole h "Member")
-            |> List.map (doubleMemInst >> voteIfOpen openElections) 
-            |> ignore  
+        /// P3: Heads decide if they want to open vote or not
+        let collectiveChoicePrinciple members heads =            
+            let doElections members head =
+                let exerciseVote openInst agent = 
+                    let inst = getSupraHolon agent supraHolons
+                    match inst with
+                    | Some i when i=openInst -> doVote agent i (decideVote agent)
+                    | _ -> ()  
+                let checkIfNeedRationAmt inst = 
+                    match inst.RaMethod with
+                    | Some (Ration(None)) ->
+                        let amt = inst.Resources / 9 //TODO: Make dynamic
+                        inst.RaMethod <- Some (Ration (Some amt)) 
+                        printfn "inst %s ration is %i" inst.Name amt   
+                    | _ -> ()                               
+                let openVotes inst = 
+                    openIssue head inst
+                    List.map (exerciseVote inst) members |> ignore
+                    closeIssue head inst
+                    declareWinner head inst
+                    checkIfNeedRationAmt inst
+                let inst = getSupraHolon head supraHolons
+                match inst with
+                | Some i when checkRole i "Member" && decideElection 0.25 0.75 i -> openVotes i  
+                | None -> printfn "cannot find supraholon of head %s" head.Name
+                | _ -> ()
+            List.map (doElections members) heads |> ignore        
 
-            // P3: Heads count votes and close the issue
-            let checkIfNeedRationAmt inst =   
-                match inst.RaMethod with
-                | Some (Ration(None)) -> 
-                    let ration = inst.Resources / 9 // TODO: divide by number of members
-                    inst.RaMethod <- Some (Ration(Some ration))
-                | _ -> ()                         
-            openElections
-            |> List.map 
-                (fun (h,i) -> 
-                    closeIssue h i
-                    declareWinner h i
-                    checkIfNeedRationAmt i)
-            |> ignore
+        List.map (boundariesPrinciple agents) gatekeepers |> ignore
+        printfn "all members at the base level are making demands"
+        congruencePrinciple heads baseHolons 
+        // TODO P4: Monitoring
+        collectiveChoicePrinciple baseHolons heads
 
-
-
+              
         // P2 & P8: Holons at the middle hierarchy are making demands
         printfn "supra-holons in the middle hierarchy are making demands"
-        principle2 supraHolons heads
+        congruencePrinciple heads supraHolons
 
         // Refill top institution
         supraHolons
