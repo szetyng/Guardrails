@@ -103,6 +103,22 @@ let isAgentInInst agent inst =
     | Some (Member (sID)), i| Some (Head (sID)), i | Some (Monitor (sID)), i| Some (Gatekeeper (sID)), i -> sID = i
     | _ -> false
 
+let hasMembers agents inst = 
+    let rec checkForMember agentLst =
+        match agentLst with
+        | agent::_ when isAgentInInst agent inst -> true
+        | _::rest -> checkForMember rest
+        | [] -> false
+    checkForMember agents  
+
+let hasBoss holons inst =    
+    let rec checkForBoss holonLst = 
+        match holonLst with
+        | holon::_ when isAgentInInst inst holon -> true
+        | _::rest -> checkForBoss rest
+        | [] -> false
+    checkForBoss holons    
+
 let printNames agents = 
     agents
     |> List.map (fun a -> printf "%s, " a.Name)

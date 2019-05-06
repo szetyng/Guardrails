@@ -151,7 +151,7 @@ let monitorDoesJob monitor inst agents =
     | tot when tot >= cost -> 
         inst.Resources <- pool - cost
         monitor.Resources <- initMonitorAmt + cost        
-        printfn "Monitor is checking for misbehavior, is paid %i to get total of %i; inst amount decreased to %i" cost monitor.Resources inst.Resources    
+        printfn "Monitor %s in %s is checking for misbehavior, is paid %i to get total of %i; inst amount decreased to %i" monitor.Name inst.Name cost monitor.Resources inst.Resources    
         inst.MessageQueue
         |> List.map checkGreed 
         |> ignore

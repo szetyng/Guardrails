@@ -8,6 +8,8 @@ open Platform
 open Physical
 open Decisions
 
+let random = System.Random()
+
 let simulate agentLst time tmax refillRate = 
     let supraHolonLst = 
         List.map getSupraID agentLst
@@ -117,10 +119,29 @@ let simulate agentLst time tmax refillRate =
                 | _ -> ()
             List.map (doElections agents) heads |> ignore        
 
+        let monitoringPrinciple members monitors isNested = 
+            let doMonitoring members monitor = 
+                let inst = getSupraHolon monitor supraHolonLst
+                match inst, isNested with
+                | Some i, b when hasBoss agentLst i<>b -> 
+                    let rate = i.MonitoringFreq
+                    let decision = random.NextDouble()
+                    match decision with
+                    | x when x<=rate -> 
+                        printfn "monitoring. random=%f, rate=%f" x rate                        
+                        monitorDoesJob monitor i members   
+                    | _ -> 
+                        printfn "not monitoring. random=%f, rate=%f" decision rate
+                        () 
+                | None, _ -> printfn "cannot find supraholon of monitor %s" monitor.Name   
+                | _ -> ()                     
+            List.map (doMonitoring members) monitors |> ignore                 
+
+
         List.map (boundariesPrinciple baseHolonLst) gatekeeperLst |> ignore
         printfn "all members at the base level are making demands"
         congruencePrinciple headLst baseHolonLst
-        // TODO P4: Monitoring
+        monitoringPrinciple baseHolonLst monitorLst false
         collectiveChoicePrinciple baseHolonLst headLst
 
               
