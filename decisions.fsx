@@ -62,10 +62,10 @@ let decideVote agent =
     let vote = rand.NextDouble()
     match vote with
     | x when x<0.5 -> 
-        printfn "%f" x
+        //printfn "%f" x
         Queue
     | x -> 
-        printfn "%f" x
+        //printfn "%f" x
         Ration(None)
 
     // let res = float(agent.Resources)
