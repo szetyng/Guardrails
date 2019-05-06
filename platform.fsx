@@ -78,7 +78,25 @@ let checkFromQ agent fact toRemove =
         // printfn "%A has been removed from %s inbox" fact agent.Name 
         true
     | true, false -> true
-    | false, _ -> false    
+    | false, _ -> false  
+
+let deleteFromQ agent msg = 
+    let rec removeFirstMsg lst m =
+        match lst with
+        | h::rest when h=m -> rest // no recursion, won't remove other occurences
+        | h::rest -> h::(removeFirstMsg rest m)
+        | _ -> []
+    agent.MessageQueue <- removeFirstMsg agent.MessageQueue msg  
+
+let deletedVotedCount inst = 
+    let rec removeMsg oldQ newQ  = 
+        match oldQ with
+        | VotedRaMeth(_)::rest -> removeMsg rest newQ
+        | h::rest -> removeMsg rest (newQ @ [h])
+        | [] -> newQ
+    let update = removeMsg inst.MessageQueue []    
+    inst.MessageQueue <- update
+    
 
 let isAgentInInst agent inst = 
     match agent.RoleOf, inst.ID with
@@ -221,38 +239,41 @@ let countVotesPlurality votelist =
     |> Seq.countBy id
     |> Seq.maxBy snd
     |> fst
- 
+
 let declareWinner head inst = 
-    if powToDeclare head inst then
-        let i = inst.ID
-        let votelist = 
-            let rec getVotes q vLst = 
-                match q with
-                | Vote (ra, iID)::rest -> 
-                    if iID=i then 
-                        checkFromQ inst (Vote (ra, iID)) true |> ignore
-                        getVotes rest (vLst @ [Vote (ra, i)])
-                    else getVotes rest vLst
-                | _::rest -> getVotes rest vLst
-                | [] -> vLst
-            getVotes inst.MessageQueue []
-        printfn "votelist: %A" votelist        
-        let winner =         
+    let winner = 
+        match powToDeclare head inst with
+        | true -> 
+            let collectVote msg = 
+                match msg with
+                | Vote (_, i) when i=inst.ID -> 
+                    deleteFromQ inst msg
+                    Some msg
+                | _ -> None
+            let votelist = 
+                inst.MessageQueue
+                |> List.map collectVote 
+                |> List.choose id 
+            printfn "votelist for %s: %A" inst.Name votelist 
+
             match inst.WdMethod, votelist with
-            | _, [] -> 
+            | _, [] ->
                 printfn "Error: No one voted"
                 None
-            | Some Plurality, vLst -> Some (countVotesPlurality vLst)     
-            | _ -> 
-                printfn "Winner declaration method is %A, not usable" inst.WdMethod
+            | Some Plurality, vLst -> Some (countVotesPlurality vLst)
+            | _ ->
+                printfn "Winner declaration method %A is not implemented" inst.WdMethod
                 None
-        match winner with
-        | Some (Vote(ra, _) ) -> 
-            printfn "%s has changed raMethod in %s to %A" head.Name inst.Name ra            
-            inst.RaMethod <- Some ra                   
-        | _ -> printfn "Not a valid issue"    
-    else 
-        printfn "%s is not empowered to declare winner to raMethod issue in institution %s" head.Name inst.Name                 
+        | false -> 
+            printfn "%s is not empowered to declare winners in inst %s" head.Name inst.Name
+            None  
+
+    deletedVotedCount inst
+    match winner with
+    | Some (Vote(ra, _)) ->
+        printfn "%s has changed raMethod in %s to %A" head.Name inst.Name ra
+        inst.RaMethod <- Some ra
+    | _ -> printfn "no winner declared in %s" inst.Name
 
 //************************* Principle 4 *********************************/
 let powToAssignMonitor head monitor inst = 
