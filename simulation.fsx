@@ -45,14 +45,14 @@ let simulate agentLst time tmax refillRate =
         //     let i = getSupra mem
         //     (mem, i)      
 
-        /// Make tuple of inst and the amount to refill
-        let doubleInstRefill inst = 
-            let r = decideOnRefill inst time refillRate
-            (inst,r)      
-
+        /// Refill only the top most institution
+        let refillTopInstitution inst = 
+            match List.contains inst supraHolonLst, checkRole inst "None" with 
+            | true, true -> 
+                let r = decideOnRefill inst time refillRate 
+                refillResources inst r
+            | _ -> ()   
         
-  
-                   
         /// P1: Gatekeeper checks for members to be kicked out
         let boundariesPrinciple agents gatekeeper =
             let inst = getSupraHolon gatekeeper supraHolonLst
@@ -129,10 +129,8 @@ let simulate agentLst time tmax refillRate =
         congruencePrinciple headLst supraHolonLst
 
 
-        supraHolonLst
-        |> List.filter (fun h -> checkRole h "None")
-        |> List.map (doubleInstRefill >> (fun (inst,r) -> refillResources inst r))
-        |> ignore
+        List.map refillTopInstitution supraHolonLst |> ignore
+
 
    
 
