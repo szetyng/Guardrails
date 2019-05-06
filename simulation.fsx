@@ -49,8 +49,8 @@ let simulate agentLst time tmax refillRate =
 
         /// Refill only the top most institution
         let refillTopInstitution inst = 
-            match List.contains inst supraHolonLst, checkRole inst "None" with 
-            | true, true -> 
+            match hasMembers agentLst inst, hasBoss agentLst inst with 
+            | true, false -> 
                 let r = decideOnRefill inst time refillRate 
                 refillResources inst r
             | _ -> ()   
@@ -63,22 +63,26 @@ let simulate agentLst time tmax refillRate =
             | None -> printfn "cannot find supraholon of gatekeeper %s" gatekeeper.Name       
 
         /// P2: Members of institutions make demands
-        let congruencePrinciple heads members = 
+        let congruencePrinciple heads members isNested = 
             let makeDemand agent = 
-                match checkRole agent "Member", getSupraHolon agent supraHolonLst with
+                let inst = getSupraHolon agent supraHolonLst
+                match checkRole agent "Member", inst with
                 | true, Some i -> 
                     demandResources agent (decideOnDemandR agent) i time
                 | _ -> ()            
             let allocateDemands head = 
                 let inst = getSupraHolon head supraHolonLst
                 match inst with
-                | Some i -> 
+                | Some i when hasBoss agentLst i<>isNested -> 
                     printfn "head %s is allocating resources to members in inst %s according to the protocol" head.Name i.Name
-                    allocateAllResources head i members
-                | None -> printfn "cannot find supraholon of head %s" head.Name            
+                    allocateAllResources head i members                
+                | None -> printfn "cannot find supraholon of head %s" head.Name   
+                | _ -> ()         
             let makeAppropriation agent = 
-                match checkRole agent "Member", getSupraHolon agent supraHolonLst with
-                | true, Some i -> appropriateResources agent i (decideOnAppropriateR agent i)
+                let inst = getSupraHolon agent supraHolonLst
+                match checkRole agent "Member", inst with
+                | true, Some i -> 
+                    appropriateResources agent i (decideOnAppropriateR agent i)
                 | _ -> ()
             List.map makeDemand members |> ignore
             List.map allocateDemands heads |> ignore
@@ -122,8 +126,8 @@ let simulate agentLst time tmax refillRate =
         let monitoringPrinciple members monitors isNested = 
             let doMonitoring members monitor = 
                 let inst = getSupraHolon monitor supraHolonLst
-                match inst, isNested with
-                | Some i, b when hasBoss agentLst i<>b -> 
+                match inst with
+                | Some i when hasBoss agentLst i<>isNested -> 
                     let rate = i.MonitoringFreq
                     let decision = random.NextDouble()
                     match decision with
@@ -133,21 +137,21 @@ let simulate agentLst time tmax refillRate =
                     | _ -> 
                         printfn "not monitoring. random=%f, rate=%f" decision rate
                         () 
-                | None, _ -> printfn "cannot find supraholon of monitor %s" monitor.Name   
+                | None -> printfn "cannot find supraholon of monitor %s" monitor.Name   
                 | _ -> ()                     
             List.map (doMonitoring members) monitors |> ignore                 
 
 
         List.map (boundariesPrinciple baseHolonLst) gatekeeperLst |> ignore
         printfn "all members at the base level are making demands"
-        congruencePrinciple headLst baseHolonLst
+        congruencePrinciple headLst baseHolonLst false
         monitoringPrinciple baseHolonLst monitorLst false
         collectiveChoicePrinciple baseHolonLst headLst
 
               
         // P2 & P8: Holons at the middle hierarchy are making demands
         printfn "supra-holons in the middle hierarchy are making demands"
-        congruencePrinciple headLst supraHolonLst
+        congruencePrinciple headLst supraHolonLst true
 
 
         List.map refillTopInstitution supraHolonLst |> ignore
