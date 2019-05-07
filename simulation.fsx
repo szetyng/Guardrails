@@ -75,7 +75,7 @@ let simulate agentLst time tmax refillRate =
                 match inst with
                 | Some i when hasBoss agentLst i<>isNested -> 
                     printfn "head %s is allocating resources to members in inst %s according to the protocol" head.Name i.Name
-                    allocateAllResources head i members                
+                    allocateAllResources head i members              
                 | None -> printfn "cannot find supraholon of head %s" head.Name   
                 | _ -> ()         
             let makeAppropriation agent = 
@@ -95,19 +95,24 @@ let simulate agentLst time tmax refillRate =
 
         /// P3: Heads decide if they want to open status or not
         /// If status is opened, every member in the inst gets to vote
-        let collectiveChoicePrinciple agents heads =            
+        let collectiveChoicePrinciple agents heads isNested =            
             let doElections agents head =
                 let exerciseVote openInst agent = 
                     let inst = getSupraHolon agent supraHolonLst
                     match inst with
-                    | Some i when i=openInst -> doVote agent i (decideVote agent)
+                    | Some i when i=openInst -> doVote agent i (decideVote agent i)
                     | _ -> ()  
                 let checkIfNeedRationAmt inst = 
                     match inst.RaMethod with
-                    | Some (Ration(None)) ->
-                        let amt = inst.Resources / 9 //TODO: Make dynamic
+                    | Some (Ration(None)) when not isNested->
+                        let amt = 5
+                        //let amt = inst.Resources / 9 //TODO: Make dynamic
                         inst.RaMethod <- Some (Ration (Some amt)) 
                         printfn "inst %s ration is %i" inst.Name amt   
+                    | Some (Ration(None)) ->
+                        let amt = 100
+                        inst.RaMethod <- Some (Ration (Some amt))
+                        printfn "inst %s ration is %i" inst.Name amt                    
                     | _ -> ()                               
                 let votingProcess inst = 
                     openIssue head inst
@@ -118,7 +123,8 @@ let simulate agentLst time tmax refillRate =
 
                 let inst = getSupraHolon head supraHolonLst
                 match inst with
-                | Some i when checkRole i "Member" && decideElection 0.25 0.75 i -> votingProcess i  
+                | Some i when hasBoss supraHolonLst i<>isNested && decideElection 0.4 0.75 i -> 
+                    votingProcess i  
                 | None -> printfn "cannot find supraholon of head %s" head.Name
                 | _ -> ()
             List.map (doElections agents) heads |> ignore        
@@ -146,16 +152,19 @@ let simulate agentLst time tmax refillRate =
         printfn "all members at the base level are making demands"
         congruencePrinciple headLst baseHolonLst false
         monitoringPrinciple baseHolonLst monitorLst false
-        collectiveChoicePrinciple baseHolonLst headLst
+        collectiveChoicePrinciple baseHolonLst headLst false
 
               
         // P2 & P8: Holons at the middle hierarchy are making demands
         printfn "supra-holons in the middle hierarchy are making demands"
         congruencePrinciple headLst supraHolonLst true
-
+        collectiveChoicePrinciple supraHolonLst headLst true
 
         List.map refillTopInstitution supraHolonLst |> ignore
-
+        
+        supraHolonLst
+        |> List.map deleteAllocatedAndAppr
+        |> ignore
 
    
 

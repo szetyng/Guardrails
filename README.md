@@ -7,13 +7,13 @@
 - [x] don't send appropriation message if x=0
 - [x] don't print all those messages anymore, too cluttered
 - [ ] make sure that each message is removed from the queue after it has been acted on
-  - [ ] remove `Allocated` messages at the end of each time slice, since the monitor is not intended to sample each time slice
+  - [x] remove `Allocated` and `Appropriated` messages at the end of each time slice, since the monitor is not intended to sample each time slice
 - [ ] feedback stuff, propensity to cheat stuff, revise behaviour stuff -> parameters to the physical functions
   - [ ] appropriation of resources takes in `r` amount of resources as an argument. Make this `r` decision here
   - [ ] when resources dwindle, call vote on changing stuff
 - [x] make a script only for initialisation of agents (makes it easier when you change stuff like record properties)
 - [x] only the top hierarchy refills, the middle hierarchy appropriates from them!
-- [ ] Clear all `VotedRaMeth(agent.ID)` messages after issue is closed
+- [x] Clear all `VotedRaMeth(agent.ID)` messages after issue is closed
 
 ## Notes
 - for some of the principles, work out if 'agent has to be a member of the institution' means `agent.RoleOf = Member` or as long as agent holds is in the institution, whether as Member, Monitor, Gatekeepr or Head.

@@ -88,11 +88,21 @@ let deleteFromQ agent msg =
         | _ -> []
     agent.MessageQueue <- removeFirstMsg agent.MessageQueue msg  
 
+let deleteAllocatedAndAppr inst = 
+    let rec removeMsg oldQ newQ = 
+        match oldQ with
+        | Allocated(_)::rest -> removeMsg rest newQ
+        | Appropriated(_)::rest -> removeMsg rest newQ
+        | h::rest -> removeMsg rest ([h] @ newQ)
+        | [] -> newQ
+    let update = removeMsg inst.MessageQueue []
+    inst.MessageQueue <- update    
+
 let deletedVotedCount inst = 
     let rec removeMsg oldQ newQ  = 
         match oldQ with
         | VotedRaMeth(_)::rest -> removeMsg rest newQ
-        | h::rest -> removeMsg rest (newQ @ [h])
+        | h::rest -> removeMsg rest ([h] @ newQ)
         | [] -> newQ
     let update = removeMsg inst.MessageQueue []    
     inst.MessageQueue <- update
@@ -192,35 +202,65 @@ let demandResources agent r inst t =
         inst.MessageQueue <- inst.MessageQueue @ [Demanded (agent.ID,r,inst.ID)]  
     | false -> printfn "member %s is not empowered to demand %i from inst %s" agent.Name r inst.Name       
 
-let powToAllocate head inst agent =
-    let a = agent.ID
-    let i = inst.ID
-    let demandLst = 
-        let rec getDemands q dLst= 
-            match q with
-            | Demanded(ag,x,ins)::rest -> getDemands rest (dLst @ [Demanded(ag,x,ins)])
-            | _::rest -> getDemands rest dLst
-            | [] -> dLst
-        getDemands inst.MessageQueue [] 
-    if head.RoleOf = Some (Head(inst.ID)) then
+// let powToAllocate head inst agent =
+//     let a = agent.ID
+//     let i = inst.ID
+//     let demandLst = 
+//         let rec getDemands q dLst= 
+//             match q with
+//             | Demanded(ag,x,ins)::rest -> getDemands rest (dLst @ [Demanded(ag,x,ins)])
+//             | _::rest -> getDemands rest dLst
+//             | [] -> dLst
+//         getDemands inst.MessageQueue [] 
+//     if head.RoleOf = Some (Head(inst.ID)) then
+//         match inst.RaMethod, demandLst with
+//         | Some Queue, Demanded(aID, r, iID)::_ -> 
+//             if aID=a && iID=i then 
+//                 checkFromQ inst (Demanded(aID, r, iID)) true |> ignore
+//                 if r<=inst.Resources then r
+//                 else if r>inst.Resources then inst.Resources
+//                 else 0
+//             else 0
+//         | Some (Ration (Some rPrime)), Demanded(aID, r, iID)::_ ->
+//             if aID=a && iID=i then
+//                 checkFromQ inst (Demanded(aID, r, iID)) true |> ignore
+//                 if r<=rPrime && r<=inst.Resources then r
+//                 else if r>rPrime && rPrime<=inst.Resources then rPrime
+//                 else if r>rPrime && rPrime>inst.Resources then inst.Resources 
+//                 else 0
+//             else 0
+//         | _ , _ -> 0     
+//     else 0       
+
+let powToAllocate head inst agent = 
+    let getDemands q =
+        let getDemand msg = 
+            match msg with
+            | Demanded(_,_,i) when i=inst.ID -> Some msg
+            | _ -> None
+        List.map getDemand q
+        |> List.choose id
+
+    match head.RoleOf = Some(Head(inst.ID)) with
+    | true -> 
+        let demandLst = getDemands inst.MessageQueue
         match inst.RaMethod, demandLst with
-        | Some Queue, Demanded(aID, r, iID)::_ -> 
-            if aID=a && iID=i then 
-                checkFromQ inst (Demanded(aID, r, iID)) true |> ignore
-                if r<=inst.Resources then r
-                else if r>inst.Resources then inst.Resources
-                else 0
-            else 0
-        | Some (Ration (Some rPrime)), Demanded(aID, r, iID)::_ ->
-            if aID=a && iID=i then
-                checkFromQ inst (Demanded(aID, r, iID)) true |> ignore
-                if r<=rPrime && r<=inst.Resources then r
-                else if r>rPrime && rPrime<=inst.Resources then rPrime
-                else if r>rPrime && rPrime>inst.Resources then inst.Resources 
-                else 0
-            else 0
-        | _ , _ -> 0     
-    else 0       
+        | Some Queue, Demanded(a,r,i)::_ when a=agent.ID ->
+            deleteFromQ inst (Demanded(a,r,i))
+            match r with
+            | demand when demand<=inst.Resources -> demand
+            | _ -> inst.Resources
+        | Some (Ration(Some ration)), Demanded(a,r,i)::_ when a=agent.ID ->
+            deleteFromQ inst (Demanded(a,r,i))    
+            match r with
+            | demand when demand<=ration && demand<=inst.Resources -> demand
+            | demand when demand<=ration && demand>inst.Resources -> inst.Resources
+            | demand when demand>ration && ration<=inst.Resources -> ration
+            | demand when demand>ration && ration>inst.Resources -> inst.Resources  
+            | _ -> 0
+        | _, _ -> 0
+    | false -> 0               
+
 
 
 //************************* Principle 3 *********************************/
