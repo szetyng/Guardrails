@@ -1,5 +1,3 @@
-open System.Runtime.Hosting
-open Simulation
 #load "holon.fsx"
 #load "platform.fsx"
 #load "physical.fsx"

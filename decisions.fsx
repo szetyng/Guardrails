@@ -1,6 +1,3 @@
-open System.Collections.Generic
-open System.Collections.Generic
-open System.Collections.Generic
 #load "holon.fsx"
 #load "platform.fsx"
 #load "physical.fsx"

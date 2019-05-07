@@ -1,4 +1,3 @@
-open System.Collections.Generic
 #load "holon.fsx"
 #load "platform.fsx"
 open Holon
@@ -22,7 +21,7 @@ let gatekeepChecksInclude gatekeep inst agents =
         let memHolon = getHolon agents mem
         match memHolon with
         | Some h -> includeToInst gatekeep h inst
-        | None -> printfn "Holon not found"
+        | None -> printfn "holon not found"
     let doesInclude msg =
         match msg with
         | Applied(mem,ins) when ins=inst.ID -> getInfoAndInclude mem  
@@ -59,7 +58,7 @@ let allocateAllResources head inst agents =
         match demandedR, memHolon with
         | 0, Some m -> printfn "head %s cannot allocate resources to %s in inst %s" head.Name m.Name inst.Name
         | x, Some m -> inst.MessageQueue <- inst.MessageQueue @ [Allocated(m.ID,x,inst.ID)]
-        | _, None -> printfn "Holon not found"
+        | _, None -> printfn "holon not found"
 
     let allocateFromDemand msg =
         match msg with
@@ -76,18 +75,37 @@ let allocateAllResources head inst agents =
 /// TODO: agent decides what r is, from Allocated or from greed
 /// does not send appropriation message if x = 0
 let appropriateResources agent inst r = 
-    let pool = inst.Resources
-    let own = agent.Resources
-    match pool with
-    | poo when poo=0 -> ()
-    | poo when poo>=r -> 
-        inst.Resources <- poo - r
-        agent.Resources <- own + r
-        inst.MessageQueue <- inst.MessageQueue @ [Appropriated(agent.ID,r,inst.ID)]
-    | poo -> 
-        inst.Resources <- 0
-        agent.Resources <- own + poo 
-        inst.MessageQueue <- inst.MessageQueue @ [Appropriated(agent.ID,poo,inst.ID)]
+    let instRes = inst.Resources
+    let agentRes = agent.Resources
+    let agentCap = agent.ResourceCap
+
+    let amtTaken = 
+        let tmp = 
+            match r with
+            | amt when amt<=instRes -> amt
+            | _ -> instRes 
+        match agentRes+tmp with
+        | newTot when newTot<=agentCap -> tmp
+        | _ -> agentCap - agentRes   
+    inst.Resources <- instRes - amtTaken
+    agent.Resources <- agentRes + amtTaken 
+    inst.MessageQueue <- inst.MessageQueue @ [Appropriated(agent.ID,amtTaken,inst.ID)]           
+
+
+
+                
+
+
+    // match pool with
+    // | poo when poo=0 -> ()
+    // | poo when poo>=r -> 
+    //     inst.Resources <- poo - r
+    //     agent.Resources <- own + r
+    //     inst.MessageQueue <- inst.MessageQueue @ [Appropriated(agent.ID,r,inst.ID)]
+    // | poo -> 
+    //     inst.Resources <- 0
+    //     agent.Resources <- own + poo 
+    //     inst.MessageQueue <- inst.MessageQueue @ [Appropriated(agent.ID,poo,inst.ID)]
             
     // let appropriatedR = 
     //     if pool>=r then 
@@ -151,11 +169,11 @@ let monitorDoesJob monitor inst agents =
     | tot when tot >= cost -> 
         inst.Resources <- pool - cost
         monitor.Resources <- initMonitorAmt + cost        
-        printfn "Monitor %s in %s is checking for misbehavior, is paid %i to get total of %i; inst amount decreased to %i" monitor.Name inst.Name cost monitor.Resources inst.Resources    
+        printfn "monitor %s in %s is checking for misbehavior, is paid %i; inst amount decreased to %i" monitor.Name inst.Name cost inst.Resources    
         inst.MessageQueue
         |> List.map checkGreed 
         |> ignore
-    | _ -> printfn "Inst has %i resources, not enough to pay %i for monitoring" cost pool
+    | _ -> printfn "inst %s has %i resources, not enough to pay %i for monitoring" inst.Name cost pool
 
 //************************* Principle 5 *********************************/
 /// Head goes through all the agents in inst and corrects SanctionLevel 
@@ -193,7 +211,7 @@ let headFeelsForgiving head inst agents sancCeil =
             match memHolon, x with
             | Some m, s when s>0 && s<=sancCeil -> upholdAppeal head m s inst
             | Some m, _ -> printfn "%s cannot appeal for sanction level %i" m.Name x
-            | _ -> printfn "Member %A not found" memHolon
+            | _ -> printfn "member %A not found" memHolon
         match msg with
         | Appeal(mem,x,ins) when ins=inst.ID -> getInfoAndUphold mem x 
         | _ -> ()

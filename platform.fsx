@@ -1,18 +1,7 @@
-open System.Collections.Generic
 #load "holon.fsx"
 open Holon
 
 //********************** Helper functions *******************************/
-/// add Msg to Recipient.MessageQueue
-let sendMessage msg recipient = 
-    match msg with
-    | Some m -> 
-        recipient.MessageQueue <- recipient.MessageQueue @ [m]
-        // printfn "%s has received message %A" recipient.Name m 
-    | None -> 
-        ()
-        //printfn "No message to be sent to %s" recipient.Name
-
 /// get holonID of last agent in list of Agents
 let getLatestId agents = 
     agents
@@ -51,18 +40,15 @@ let getSupraHolon agent agents=
     | Some (Member supraID) -> getHolon agents supraID
     | None -> None
 
-let findApplicants inst = 
-    let q = inst.MessageQueue
-    let i = inst.ID
-    let applicants = []
-    let rec getting q lst = 
-        match q with
-        | Applied(x, iID)::rest -> 
-            if iID = i then getting rest (List.append lst [x])
-            else getting rest lst
-        | _::rest -> getting rest lst
-        | [] -> lst
-    getting q applicants                
+let findApplicants inst =     
+    let getApplicant msg = 
+        match msg with
+        | Applied(x,i) when i=inst.ID -> Some x
+        | _ -> None 
+
+    inst.MessageQueue
+    |> List.map getApplicant 
+    |> List.choose id                   
     
 /// SIDE-EFFECT: agent.MessageQueue
 /// if toRemove, only removes first occurence of fact
@@ -109,8 +95,8 @@ let deletedVotedCount inst =
     
 
 let isAgentInInst agent inst = 
-    match agent.RoleOf, inst.ID with
-    | Some (Member (sID)), i| Some (Head (sID)), i | Some (Monitor (sID)), i| Some (Gatekeeper (sID)), i -> sID = i
+    match agent.RoleOf with
+    | Some (Member (sID)) | Some (Head (sID)) | Some (Monitor (sID)) | Some (Gatekeeper (sID)) -> sID = inst.ID
     | _ -> false
 
 let hasMembers agents inst = 
@@ -180,18 +166,13 @@ let excludeFromInst gatekeep agent inst =
 //************************* Principle 2 *********************************/
 
 let powToDemand agent inst step = 
-    let a = agent.ID
-    let i = inst.ID
-    // List.contains is not good enough due to anonymous variable r in the message
     let hasAgentDemanded = 
-        let rec checkQ q = 
+        let rec checkDemand q = 
             match q with
-            | Demanded (aID, _, iID)::rest -> 
-                if (a = aID) && (i = iID) then true
-                else checkQ rest         
-            | _::rest -> checkQ rest
-            | [] -> false
-        checkQ inst.MessageQueue        
+            | Demanded(a,_,i)::_ when a=agent.ID && i=inst.ID -> true
+            | _::rest -> checkDemand rest
+            | [] -> false 
+        checkDemand inst.MessageQueue              
     let checkCritLst = [isAgentInInst agent inst ; agent.SanctionLevel = 0; not hasAgentDemanded]
     not (List.contains false checkCritLst)
 
@@ -265,17 +246,14 @@ let powToAllocate head inst agent =
 
 //************************* Principle 3 *********************************/
 let powToVote agent inst = 
-    let a = agent.ID
     let hasAgentVoted = 
-        let rec checkQ q =
+        let rec checkVote q =
             match q with
-            | VotedRaMeth(aID)::rest -> 
-                if aID=a then true
-                else checkQ rest
-            | _::rest -> checkQ rest
+            | VotedRaMeth(a)::_ when a=agent.ID -> true
+            | _::rest -> checkVote rest
             | [] -> false
-        checkQ inst.MessageQueue           
-
+        checkVote inst.MessageQueue        
+      
     let checkCritLst = [isAgentInInst agent inst ; not hasAgentVoted ; inst.IssueStatus]
     not (List.contains false checkCritLst) 
 
@@ -314,11 +292,11 @@ let declareWinner head inst =
 
             match inst.WdMethod, votelist with
             | _, [] ->
-                printfn "Error: No one voted"
+                printfn "error: No one voted"
                 None
             | Some Plurality, vLst -> Some (countVotesPlurality vLst)
             | _ ->
-                printfn "Winner declaration method %A is not implemented" inst.WdMethod
+                printfn "winner declaration method %A is not implemented" inst.WdMethod
                 None
         | false -> 
             printfn "%s is not empowered to declare winners in inst %s" head.Name inst.Name
@@ -349,31 +327,25 @@ let powToReport monitor agent inst =
 
 //************************* Principle 5 *********************************/
 let reportGreed monitor agent inst = 
-    let a = agent.ID
-    let i = inst.ID
     let allocatedR =     
         let rec getAllocatedR lst = 
             match lst with
-            | Allocated(mem,x,ins)::rest ->
-                if mem=a && ins=i then x
-                else getAllocatedR rest
+            | Allocated(mem,x,ins)::_ when mem=agent.ID && ins=inst.ID -> x
             | _::rest -> getAllocatedR rest
             | [] -> 0
         getAllocatedR inst.MessageQueue 
     let appropriatedR =
         let rec getAppropriatedR lst = 
             match lst with
-            | Appropriated(mem,x,ins)::rest ->
-                if mem=a && ins=i then x
-                else getAppropriatedR rest
+            | Appropriated(mem,x,ins)::_ when mem=agent.ID && ins=inst.ID -> x
             | _::rest -> getAppropriatedR rest
             | [] -> 0
         getAppropriatedR inst.MessageQueue
     if appropriatedR>allocatedR && powToReport monitor agent inst then
         agent.OffenceLevel <- agent.OffenceLevel + 1
-        printfn "Monitor %s reported member %s in institution %s; offence level increased to %i" monitor.Name agent.Name inst.Name agent.OffenceLevel
+        printfn "monitor %s reported member %s in institution %s; offence level increased to %i" monitor.Name agent.Name inst.Name agent.OffenceLevel
     else
-        printfn "Monitor %s failed to report member %s in institution %s" monitor.Name agent.Name inst.Name
+        printfn "monitor %s failed to report member %s in institution %s" monitor.Name agent.Name inst.Name
 
 let powToSanction head inst = 
     head.RoleOf = Some (Head(inst.ID))
@@ -382,9 +354,9 @@ let sanctionMember head agent inst =
     let sancLvl = agent.OffenceLevel
     if powToSanction head inst then
         agent.SanctionLevel <- sancLvl
-        printfn "Head %s changed sanction level of %s in inst %s to %i" head.Name agent.Name inst.Name agent.SanctionLevel
+        printfn "head %s changed sanction level of %s in inst %s to %i" head.Name agent.Name inst.Name agent.SanctionLevel
     else
-        printfn "Head %s failed to sanction member %s in inst %s" head.Name agent.Name inst.Name    
+        printfn "head %s failed to sanction member %s in inst %s" head.Name agent.Name inst.Name    
 
 //************************* Principle 6 *********************************/
 let powToAppeal agent s inst = 

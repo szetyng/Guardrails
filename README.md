@@ -251,7 +251,7 @@ TODO:
 - [x] p3: how does agent decide on which `raMethod` to vote for?
 - [ ] p3: if Ration wins, how does Head decide on what R to use. Something that works in tandem with `declareWinner`?
   - [ ] count number of members in an inst so that we can divide stuff
-- [ ] p4: monitor decides whether or not it wants to do its job -> if random number <= monitoring freq, where freq is in range (0,1)
+- [x] p4: monitor decides whether or not it wants to do its job -> if random number <= monitoring freq, where freq is in range (0,1)
 - [ ] p6: how does agent decide if they want to appeal? Probably similar to compliancy in p2
 
 ### P2: how does agent decide how much to demand?

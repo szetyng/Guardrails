@@ -1,5 +1,3 @@
-open System.Web.Services.Description
-open System.Collections.Generic
 type HolonID = int
 
 type RoleIn = 

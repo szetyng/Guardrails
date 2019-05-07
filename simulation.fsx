@@ -1,4 +1,3 @@
-open System.Runtime.Hosting
 #load "holon.fsx"
 #load "platform.fsx"
 #load "physical.fsx"
@@ -149,17 +148,26 @@ let simulate agentLst time tmax refillRate =
 
 
         List.map (boundariesPrinciple baseHolonLst) gatekeeperLst |> ignore
+
         printfn "all members at the base level are making demands"
         congruencePrinciple headLst baseHolonLst false
+        printfn ""
+
+        printfn ""
         monitoringPrinciple baseHolonLst monitorLst false
+
+        printfn ""
         collectiveChoicePrinciple baseHolonLst headLst false
 
               
         // P2 & P8: Holons at the middle hierarchy are making demands
         printfn "supra-holons in the middle hierarchy are making demands"
         congruencePrinciple headLst supraHolonLst true
+
+        printfn ""
         collectiveChoicePrinciple supraHolonLst headLst true
 
+        printfn ""
         List.map refillTopInstitution supraHolonLst |> ignore
         
         supraHolonLst
