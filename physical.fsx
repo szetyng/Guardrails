@@ -6,13 +6,16 @@ open Platform
 //************************* Misc *********************************/
 let refillResources inst r = 
     let max = inst.ResourceCap
-    match r with
-    | refill when refill>=max -> 
-        inst.Resources <- max
-        printfn "inst %s has refilled its resources to the max: %i" inst.Name inst.Resources
-    | refill -> 
-        inst.Resources <- inst.Resources + refill
-        printfn "inst %s has refilled its resources by %i to %i" inst.Name refill inst.Resources
+    let newTotal = 
+        match inst.Resources+r with
+        | newTot when newTot<=max ->    
+            printfn "inst %s has refilled its resources by %i to %i" inst.Name r newTot
+            newTot
+        | _ -> 
+            printfn "inst %s has refilled its resources to the max: %i" inst.Name max
+            max
+    inst.Resources <- newTotal 
+    
 
 //************************* Principle 1 *********************************/
 /// Gatekeeper checks for applications
