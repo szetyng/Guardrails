@@ -16,7 +16,6 @@ let refillResources inst r =
             max
     inst.Resources <- newTotal 
     
-
 //************************* Principle 1 *********************************/
 /// Gatekeeper checks for applications
 let gatekeepChecksInclude gatekeep inst agents = 

@@ -115,6 +115,10 @@ let hasBoss holons inst =
         | [] -> false
     checkForBoss holons    
 
+let getBaseMembers agents inst = 
+    agents
+    |> List.filter (fun a -> a.RoleOf=Some(Member(inst.ID))) 
+
 let printNames agents = 
     agents
     |> List.map (fun a -> printf "%s, " a.Name)

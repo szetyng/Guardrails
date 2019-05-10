@@ -13,5 +13,5 @@ open Simulation
 //open Initialisation
 open Init2
 
-simulate allAgents 0 20 [Low;Low;High]
+simulate allAgents 0 20 5 [Low;Low;High]
 

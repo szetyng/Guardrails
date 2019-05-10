@@ -5,28 +5,48 @@ open Holon
 open Platform
 open Physical
 
-type Rate = High | Medium | Low
-
 let rand = System.Random()
 
 //************************* Misc *********************************/
 /// refillRate example: [High;High;Medium;Low]
 let decideOnRefill inst time refillRate = 
     let nrOfSeasons = List.length refillRate 
-    let timeBlock = time/5
-    let seasonInd = timeBlock%nrOfSeasons // which season are we in
-    let season = refillRate.[seasonInd] 
     let max = float(inst.ResourceCap)
-   
+
     let amtFloat = 
-        match season with
-            | High -> max
-            | Medium -> 0.5*max
-            | Low -> 0.25*max
+        match nrOfSeasons with
+        | 0 -> 
+            printfn "did not set a refill rate for %s, will refill to max" inst.Name
+            max
+        | nr ->        
+            let timeBlock = time/1
+            let seasonInd = timeBlock%nr // which season are we in
+            let season = refillRate.[seasonInd] 
+       
+            match season with
+                | High -> max
+                | Medium -> 0.5*max
+                | Low -> 0.25*max
     int(amtFloat)        
     
+let getGenerationAmt inst time = 
+    let refillRate = inst.RefillRate
+    decideOnRefill inst time refillRate
+
 
 //************************* Principle 2 *********************************/
+/// Ration per member = ((Total resources produced + amt in bank)/Nr of base members) - tax
+let calculateRationMember tax members agentLst inst = 
+    let getMembers state holon = 
+        let baseMembers = getBaseMembers agentLst holon
+        state + List.length baseMembers
+
+    let bank = inst.Resources
+    let totalResources = List.fold (fun bank agent -> bank + agent.Resources) bank members
+    let totalMembers = List.fold getMembers 0 members
+    //printfn "totalResources=%i, total base members in %s is %i, bank was=%i" totalResources inst.Name totalMembers bank
+    (totalResources/totalMembers) - tax
+    
 // agent decides on how to demand for r
 let decideOnDemandR agent = 
     let greed = agent.Greediness

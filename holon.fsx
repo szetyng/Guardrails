@@ -1,5 +1,7 @@
 type HolonID = int
 
+type Rate = High | Medium | Low
+
 type RoleIn = 
     | Member of HolonID
     | Head of HolonID
@@ -21,6 +23,8 @@ type MessageType =
     | VotedRaMeth of HolonID                    // VotedRaMeth(Agent) 
     | Appropriated of HolonID * int * HolonID    // Appropriate(Agent, Resources, Inst)
     | Appeal of HolonID * int * HolonID         // Appeal(Agent, SanctionLevel, Inst)
+    | Tax of HolonID * int                      // Tax(Agent, Amount, Inst)
+    | Subsidy of HolonID * int 
 
 type Holon =
     { 
@@ -30,6 +34,7 @@ type Holon =
         mutable Resources : int;
         ResourceCap : int;
         mutable MessageQueue : MessageType list;
+        RefillRate : Rate list;
 
         // For sub-holons        
         mutable RoleOf : RoleIn option;
