@@ -42,6 +42,7 @@ let calculateRationMember tax members agentLst inst =
         state + List.length baseMembers
 
     let bank = inst.Resources
+    printfn "inst %s has %i in bank" inst.Name bank
     let totalResources = List.fold (fun bank agent -> bank + agent.Resources) bank members
     let totalMembers = List.fold getMembers 0 members
     //printfn "totalResources=%i, total base members in %s is %i, bank was=%i" totalResources inst.Name totalMembers bank

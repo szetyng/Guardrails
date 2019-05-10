@@ -11,8 +11,11 @@ let topCap = 1000000000
 let midCap = 1000
 let bottomCap = 50
 
-let refillRateA = [High;High;Low;Low;Low;Low;High;High;High;High;Low;Low]
-let refillRateB = [High;Low;Low;High;High;High;High;Low;Low;Low;Low;High]
+//let refillRateA = [High;High;Low;Low;Low;Low;High;High;High;High;Low;Low]
+//let refillRateB = [High;Low;Low;High;High;High;High;Low;Low;Low;Low;High]
+
+let refillRateA = [High;High;Low;Low;Low;Low;High]
+let refillRateB = [Low; High; High; Low; Low; Low; Low]
 
 let midGreed = 0.75
 

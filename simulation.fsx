@@ -10,7 +10,7 @@ open Decisions
 
 type HolonState = 
     {
-        Identifier : HolonID;
+        SupraID : HolonID;
         ResourcesState : int list;
         BenefitState : int list;
     }
@@ -56,10 +56,11 @@ let simulate agentLst time tmax tax refillRate =
         |> ignore
         
         let rationMember = calculateRationMember tax midHolonLst agentLst topHolon 
+        printfn "ration per base member = %i" rationMember
 
         let calculateRationSupra rationMember supra = 
             let sz = List.length (getBaseMembers agentLst supra)
-            printfn "inst %s with size %i has been given ration %i" supra.Name sz (rationMember*sz) 
+            printfn "inst %s in total gets %i" supra.Name (rationMember*sz)
             rationMember*sz
         let rationSupraLst = List.map (calculateRationSupra rationMember) midHolonLst    
 
@@ -81,7 +82,7 @@ let simulate agentLst time tmax tax refillRate =
                 inst.Resources <- inst.Resources - amt
                 boss.Resources <- boss.Resources + amt
                 inst.MessageQueue <- inst.MessageQueue @ [Tax(i,amt)]
-                printfn "inst %s has been taxed %i amt by offices" inst.Name amt
+                printfn "inst %s paid TAX: %i :(" inst.Name amt
                 None
             | m -> Some m
         // If msg is Subsidy, subsidises that member by taking from boss
@@ -93,7 +94,7 @@ let simulate agentLst time tmax tax refillRate =
                 inst.Resources <- inst.Resources + amt
                 boss.Resources <- boss.Resources - amt
                 inst.MessageQueue <- inst.MessageQueue @ [Subsidy(i,amt)]
-                printfn "inst %s has been subsidised %i amt by offices" inst.Name amt
+                printfn "inst %s got SUBSIDY: %i :)" inst.Name amt
                 None
             | m -> Some m            
         let qAfterTax inst = 
@@ -113,7 +114,9 @@ let simulate agentLst time tmax tax refillRate =
                     | _::rest -> getInfoFromQ rest
                     | [] -> 0
                 getInfoFromQ inst.MessageQueue
-            inst.Resources <- 0  
+
+            if hasBoss supraHolonLst inst then inst.Resources <- 0  
+            else ()
             inst.MessageQueue <- [] // obv don't do this, TODO fix
             netBenefit
 
@@ -142,8 +145,9 @@ let simulate agentLst time tmax tax refillRate =
                 let oldBen = oldState.BenefitState
                 let rec getS supras = 
                     match supras with
-                    | h::_ when h.ID=oldState.Identifier -> 
-                        {oldState with ResourcesState=oldRes @ [h.Resources]; BenefitState=oldBen @ [satisfactionOfInst h]}
+                    | h::_ when h.ID=oldState.SupraID -> 
+                        //let accumBen = List.tail 
+                        {oldState with ResourcesState=oldRes @ [h.Resources]; BenefitState=oldBen @ [ (satisfactionOfInst h)]}
                     | _::rest -> getS rest
                     | [] -> oldState    
                 getS insts                            
@@ -152,6 +156,6 @@ let simulate agentLst time tmax tax refillRate =
             runSimulate (t+1) newState
             
     // include ID to be safe
-    let createInitState holon = {Identifier=holon.ID; ResourcesState=[holon.Resources]; BenefitState = [0]}
+    let createInitState holon = {SupraID=holon.ID; ResourcesState=[holon.Resources]; BenefitState = [0]}
     let initState = List.map createInitState supraHolonLst    
     runSimulate time initState 
