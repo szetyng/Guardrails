@@ -13,7 +13,7 @@ open Simulation
 //open Initialisation
 open Init2
 
-let answer = simulate allAgents 0 20 5 [Low;Low;High]
+let answer = simulate allAgents 0 20 25 5 5 [Low;Low;High]
 
 let runningTotal = List.scan (+) 0 >> List.tail
 let transformCumulative state = 
@@ -25,5 +25,4 @@ let cumAnswer =
     |> List.map transformCumulative
 let parksBen = cumAnswer.[1].BenefitState
 let brookBen = cumAnswer.[2].BenefitState
-
-List.map2 (+) parksBen brookBen
+//List.map2 (+) parksBen brookBen

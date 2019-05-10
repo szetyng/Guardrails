@@ -36,6 +36,7 @@ let getGenerationAmt inst time =
 
 //************************* Principle 2 *********************************/
 /// Ration per member = ((Total resources produced + amt in bank)/Nr of base members) - tax
+/// inst is TopHolon
 let calculateRationMember tax members agentLst inst = 
     let getMembers state holon = 
         let baseMembers = getBaseMembers agentLst holon
@@ -43,10 +44,30 @@ let calculateRationMember tax members agentLst inst =
 
     let bank = inst.Resources
     printfn "inst %s has %i in bank" inst.Name bank
-    let totalResources = List.fold (fun bank agent -> bank + agent.Resources) bank members
+    let totalResources = List.fold (fun bank agent -> bank + agent.Resources) bank members // List.fold bc more than one midHolon
     let totalMembers = List.fold getMembers 0 members
     //printfn "totalResources=%i, total base members in %s is %i, bank was=%i" totalResources inst.Name totalMembers bank
     (totalResources/totalMembers) - tax
+
+/// inst is a midHolon
+let calculateTaxSubsidy taxBracket taxRate subsidyRate agentLst inst = 
+    let getPopulation acc holon =  
+        let baseMembers = getBaseMembers agentLst holon
+        acc + List.length baseMembers
+
+    let totalMembers = getPopulation 0 inst
+    let resPerMember = inst.Resources/totalMembers
+    match resPerMember with
+    | xPerMem when xPerMem > taxBracket -> 
+        printfn "%s's members get %i each" inst.Name (xPerMem - taxRate)
+        Some (Tax(inst.ID, taxRate*totalMembers))
+    | xPerMem when xPerMem < taxBracket -> 
+        printfn "%s's members get %i each" inst.Name (xPerMem + taxRate)
+        Some (Subsidy(inst.ID, subsidyRate*totalMembers))
+    | x -> 
+        printfn "%s's members get %i each" inst.Name x
+        None
+
     
 // agent decides on how to demand for r
 let decideOnDemandR agent = 

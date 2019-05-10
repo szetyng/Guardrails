@@ -17,7 +17,7 @@ type HolonState =
 
 let random = System.Random()
 
-let simulate agentLst time tmax tax refillRate = 
+let simulate agentLst time tmax taxBracket taxRate subsidyRate refillRate = 
     let supraHolonLst = 
         List.map getSupraID agentLst
         |> List.distinct
@@ -54,25 +54,14 @@ let simulate agentLst time tmax tax refillRate =
         midHolonLst
         |> List.map generateResources
         |> ignore
-        
-        let rationMember = calculateRationMember tax midHolonLst agentLst topHolon 
-        printfn "ration per base member = %i" rationMember
 
-        let calculateRationSupra rationMember supra = 
-            let sz = List.length (getBaseMembers agentLst supra)
-            printfn "inst %s in total gets %i" supra.Name (rationMember*sz)
-            rationMember*sz
-        let rationSupraLst = List.map (calculateRationSupra rationMember) midHolonLst    
-
-        let reportTaxSubsidy inst rationSupra = 
-            let rProd = inst.Resources
-            match rationSupra with
-            | rAllocated when rProd>rAllocated -> Some (Tax (inst.ID,rProd-rAllocated))
-            | rAllocated when rProd<rAllocated -> Some (Subsidy (inst.ID, rAllocated-rProd))
-            | _ -> None 
-        let reports = List.map2 reportTaxSubsidy midHolonLst rationSupraLst |> List.choose id
-        topHolon.MessageQueue <- topHolon.MessageQueue @ reports
-
+        let reportTax = 
+            midHolonLst
+            |> List.map (calculateTaxSubsidy taxBracket taxRate subsidyRate agentLst) 
+            |> List.choose id
+        topHolon.MessageQueue <- topHolon.MessageQueue @ reportTax        
+               
+   
         // If msg is Tax, taxes that member and gives it to boss
         // and Tax msg is removed
         let takeTax members boss msg = 
@@ -89,21 +78,26 @@ let simulate agentLst time tmax tax refillRate =
         // and Subsidy msg is removed
         let giveSubsidy members boss msg =
             match msg with
-            | Subsidy(i, amt) ->
+            | Subsidy(i, amt) when amt<=boss.Resources ->
                 let inst = List.find (fun agent -> agent.ID=i) members
                 inst.Resources <- inst.Resources + amt
                 boss.Resources <- boss.Resources - amt
                 inst.MessageQueue <- inst.MessageQueue @ [Subsidy(i,amt)]
                 printfn "inst %s got SUBSIDY: %i :)" inst.Name amt
                 None
+            | Subsidy(i,amt) -> 
+                let inst = List.find (fun agent -> agent.ID=i) members
+                // strict because strict guardrails
+                printfn "inst %s's subsidy of %i is refused because bank only has %i" inst.Name amt boss.Resources  
+                None          
             | m -> Some m            
-        let qAfterTax inst = 
+        let taxAndClearQ inst = 
             inst.MessageQueue
             |> List.map (takeTax midHolonLst topHolon)
             |> List.choose id
             |> List.map (giveSubsidy midHolonLst topHolon)
             |> List.choose id
-        topHolon.MessageQueue <- qAfterTax topHolon      
+        topHolon.MessageQueue <- taxAndClearQ topHolon      
 
         let satisfactionOfInst inst = 
             let netBenefit = 
@@ -115,22 +109,26 @@ let simulate agentLst time tmax tax refillRate =
                     | [] -> 0
                 getInfoFromQ inst.MessageQueue
 
+            // Consume the resources, but not for topHolon acting as bank
             if hasBoss supraHolonLst inst then inst.Resources <- 0  
             else ()
-            inst.MessageQueue <- [] // obv don't do this, TODO fix
+
+            let clearMsg msgType msg = 
+                match msgType,msg with
+                | Tax(_), Tax(_) -> None
+                | Subsidy(_), Subsidy(_) -> None
+                | _, m -> Some m
+            let qWithoutTax = 
+                inst.MessageQueue
+                |> List.map (clearMsg (Tax(inst.ID,0))) 
+                |> List.choose id
+                |> List.map (clearMsg (Subsidy(inst.ID,0)))
+                |> List.choose id   
+
+            inst.MessageQueue <- qWithoutTax
             netBenefit
 
-
-            // let getStuff state msg = 
-            //     let netBenefit = 
-            //         match msg with
-            //         | Tax(i,amt) when i=inst.ID -> -amt
-            //         | Subsidy(i,amt) when i=inst.ID -> amt
-            //         | _ -> 0
-
-
-            // inst.MessageQueue
-            // |> List.fold getStuff []              
+            
 
         
    
