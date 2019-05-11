@@ -55,9 +55,15 @@ let simulate agentLst time tmax taxBracket taxRate subsidyRate refillRate =
         |> List.map generateResources
         |> ignore
 
+        let needPayTax = 
+            let target = topHolon.ResourceCap
+            match topHolon.Resources with
+            | r when r<target -> true
+            | _ -> false
+
         let reportTax = 
             midHolonLst
-            |> List.map (calculateTaxSubsidy taxBracket taxRate subsidyRate agentLst) 
+            |> List.map (calculateTaxSubsidy taxBracket taxRate needPayTax subsidyRate agentLst) 
             |> List.choose id
         topHolon.MessageQueue <- topHolon.MessageQueue @ reportTax        
                

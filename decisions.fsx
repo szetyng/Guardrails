@@ -50,21 +50,25 @@ let calculateRationMember tax members agentLst inst =
     (totalResources/totalMembers) - tax
 
 /// inst is a midHolon
-let calculateTaxSubsidy taxBracket taxRate subsidyRate agentLst inst = 
+let calculateTaxSubsidy taxBracket taxRate needPayTax subsidyRate agentLst inst = 
     let getPopulation acc holon =  
         let baseMembers = getBaseMembers agentLst holon
         acc + List.length baseMembers
 
     let totalMembers = getPopulation 0 inst
     let resPerMember = inst.Resources/totalMembers
-    match resPerMember with
-    | xPerMem when xPerMem > taxBracket -> 
+    match resPerMember, needPayTax with
+    | (xPerMem, true) when xPerMem > taxBracket -> 
         printfn "%s's members get %i each" inst.Name (xPerMem - taxRate)
         Some (Tax(inst.ID, taxRate*totalMembers))
-    | xPerMem when xPerMem < taxBracket -> 
-        printfn "%s's members get %i each" inst.Name (xPerMem + taxRate)
+    | (xPerMem, false) when xPerMem > taxBracket ->
+        printfn "%s's members get %i each" inst.Name (xPerMem)      
+        None  
+    | (xPerMem, _) when xPerMem < taxBracket ->
+        // TODO: wrong to print it here, bc subsidy might get rejected 
+        printfn "%s's members get %i each" inst.Name (xPerMem + subsidyRate)
         Some (Subsidy(inst.ID, subsidyRate*totalMembers))
-    | x -> 
+    | x, _ -> 
         printfn "%s's members get %i each" inst.Name x
         None
 

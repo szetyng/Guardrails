@@ -2,18 +2,18 @@
 #load "platform.fsx"
 #load "physical.fsx"
 #load "decisions.fsx"
-#load "simulation.fsx"
+#load "okSim.fsx"
 //#load "initialisation.fsx"
-#load "init2.fsx"
+#load "okInit.fsx"
 open Holon
 open Platform
 open Physical
 open Decisions
-open Simulation
+open OkSim
 //open Initialisation
-open Init2
+open OkInit
 
-let answer = simulate allAgents 0 20 25 5 5 [Low;Low;High]
+let answer = simulate allAgents 0 20 25 10 5 [Low;Low;High]
 
 let runningTotal = List.scan (+) 0 >> List.tail
 let transformCumulative state = 

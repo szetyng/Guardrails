@@ -1,13 +1,13 @@
 #load "holon.fsx"
 #load "platform.fsx"
 #load "physical.fsx"
-#load "simulation.fsx"
+#load "okSim.fsx"
 open Holon
 open Platform
 open Physical
-open Simulation
+open OkSim
 
-let topCap = 1000000000
+let topCap = 200
 let midCap = 1000
 let bottomCap = 50
 
