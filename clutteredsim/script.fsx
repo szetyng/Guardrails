@@ -1,24 +1,26 @@
 open System.Windows.Forms
-#load "holon.fs"
-#load "platform.fs"
-#load "simulation.fs"
+#load "holon.fsx"
+#load "platform.fsx"
+#load "physical.fsx"
+#load "decisions.fsx"
+#load "sim.fsx"
+//#load "initialisation.fsx"
 #load "init.fsx"
 open Holon
 open Platform
-open Simulation
+open Physical
+open Decisions
+open Sim
+//open Initialisation
 open Init
 
 let simType = Strict
 let timeBegin = 0
-let timeMax = 100
+let timeMax = 20
 let taxBracket = 25
 let taxRate = 20
 let subsidyRate = 10
-let refillRateA = [High; High; Low; Low; Low; High; High; Low]//; Low; Low; High]
-let refillRateB = [Low; High; High; Low; High; High; Low; Low]//; Low; Low; Low]
 
-
-let allAgents = init refillRateA refillRateB
 let answer = simulate allAgents simType timeBegin timeMax taxBracket taxRate subsidyRate
 
 let runningTotal = List.scan (+) 0 >> List.tail

@@ -1,21 +1,21 @@
 #load "holon.fsx"
 #load "platform.fsx"
 #load "physical.fsx"
-#load "okSim.fsx"
+#load "sim.fsx"
 open Holon
 open Platform
 open Physical
-open OkSim
+open Sim
 
-let topCap = 200
+let topCap = 1000
 let midCap = 1000
 let bottomCap = 50
 
 //let refillRateA = [High;High;Low;Low;Low;Low;High;High;High;High;Low;Low]
 //let refillRateB = [High;Low;Low;High;High;High;High;Low;Low;Low;Low;High]
 
-let refillRateA = [High;High;Low;Low;Low;Low;High]
-let refillRateB = [Low; High; High; Low; Low; Low; Low]
+let refillRateA = [High; High; Low; Low; Low; High; High; Low]//; Low; Low; High]
+let refillRateB = [Low; High; High; Low; High; High; Low; Low]//; Low; Low; Low]
 
 let midGreed = 0.75
 
@@ -45,12 +45,14 @@ let def =
 let parksNames = 
     [
         "tom"; "donna" ; "jerry"; "ben"; "andy" ; "chris"; "mark"; "ann"; "jeremy"; "gary";
-        "larry"; "ingrid"; "jen"; "bob"; "barb"; "kris"; "bruce"; "peter"; "parker"; "tony"
+        "larry"; "ingrid"; "jen"; "bob"; "barb"; "kris"; "bruce"; "peter"; "parker"; "tony";
+        "abba"; "bsb"; "nsync"; "blue" ; "westlife"
     ]
 let brooklynNames = 
     [
         "jake"; "rosa"; "charles"; "michael"; "norm"; "kevin"; "adrian"; "madeline"; "gina"; "boyle";
-        "steve"; "rogers"; "clint"; "scott"; "paul" ; "carol"; "thor"; "korg"; "meek"; "reek"
+        "steve"; "rogers"; "clint"; "scott"; "paul" ; "carol"; "thor"; "korg"; "meek"; "reek";
+        "sansa"; "arya"; "jon"; "dany"; "tyrion"
     ]
 
 // let agentNames = 

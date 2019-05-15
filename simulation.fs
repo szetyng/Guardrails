@@ -1,23 +1,21 @@
-open System.Collections.Generic
-#load "holon.fsx"
-#load "platform.fsx"
-#load "physical.fsx"
-#load "decisions.fsx"
+module Simulation
 open Holon
 open Platform
-open Physical
-open Decisions
+
+
+type SimType = Strict | Reasonable | Lenient
 
 type HolonState = 
     {
         SupraID : HolonID;
         ResourcesState : int list;
-        BenefitState : int list;
+        CurrBenefit : int list;
+        RunningBenefit : int list;
     }
 
 let random = System.Random()
 
-let simulate agentLst time tmax taxBracket taxRate subsidyRate refillRate = 
+let simulate agentLst simType time tmax taxBracket taxRate subsidyRate = 
     let supraHolonLst = 
         List.map getSupraID agentLst
         |> List.distinct
@@ -56,10 +54,14 @@ let simulate agentLst time tmax taxBracket taxRate subsidyRate refillRate =
         |> ignore
 
         let needPayTax = 
-            let target = topHolon.ResourceCap
-            match topHolon.Resources with
-            | r when r<target -> true
-            | _ -> false
+            match simType with
+            | Strict -> true
+            | Reasonable ->
+                let target = topHolon.ResourceCap
+                match topHolon.Resources with
+                | r when r<target -> true
+                | _ -> false
+            | Lenient -> false            
 
         let reportTax = 
             midHolonLst
@@ -146,12 +148,12 @@ let simulate agentLst time tmax taxBracket taxRate subsidyRate refillRate =
         | t -> 
             let updateState insts oldState = 
                 let oldRes = oldState.ResourcesState
-                let oldBen = oldState.BenefitState
+                let oldBen = oldState.CurrBenefit
                 let rec getS supras = 
                     match supras with
                     | h::_ when h.ID=oldState.SupraID -> 
                         //let accumBen = List.tail 
-                        {oldState with ResourcesState=oldRes @ [h.Resources]; BenefitState=oldBen @ [ (satisfactionOfInst h)]}
+                        {oldState with ResourcesState=oldRes @ [h.Resources]; CurrBenefit=oldBen @ [ (satisfactionOfInst h)]}
                     | _::rest -> getS rest
                     | [] -> oldState    
                 getS insts                            
@@ -160,6 +162,6 @@ let simulate agentLst time tmax taxBracket taxRate subsidyRate refillRate =
             runSimulate (t+1) newState
             
     // include ID to be safe
-    let createInitState holon = {SupraID=holon.ID; ResourcesState=[holon.Resources]; BenefitState = [0]}
+    let createInitState holon = {SupraID=holon.ID; ResourcesState=[holon.Resources]; CurrBenefit = [0]; RunningBenefit=[0]}
     let initState = List.map createInitState supraHolonLst    
     runSimulate time initState 
