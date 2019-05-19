@@ -1,4 +1,4 @@
-module Platform
+#load "holon.fsx"
 open Holon
 
 //********************** Helper functions *******************************/
@@ -12,9 +12,6 @@ let getLatestId agents =
 /// check if Agent occupies Role
 let checkRole agent role =
     match (role, agent.RoleOf) with
-    | "Head", Some (Head (_)) -> true
-    | "Gatekeeper", Some (Gatekeeper (_)) -> true
-    | "Monitor", Some (Monitor (_)) -> true
     | "Member", Some (Member (_)) -> true
     | "Null", None | "None", None -> true
     | _, _ -> false
@@ -23,9 +20,6 @@ let checkRole agent role =
 /// TODO: list might not be sorted
 let getSupraID agent = 
     match agent.RoleOf with
-    | Some (Head supraID) -> Some supraID
-    | Some (Gatekeeper supraID) -> Some supraID
-    | Some (Monitor supraID) -> Some supraID
     | Some (Member supraID) -> Some supraID
     | None -> None
 
@@ -34,9 +28,6 @@ let getHolon agents holonID = List.tryFind (fun a -> a.ID = holonID) agents
 
 let getSupraHolon agent agents= 
     match agent.RoleOf with
-    | Some (Head supraID) -> getHolon agents supraID
-    | Some (Gatekeeper supraID) -> getHolon agents supraID
-    | Some (Monitor supraID) -> getHolon agents supraID
     | Some (Member supraID) -> getHolon agents supraID
     | None -> None
 
@@ -50,7 +41,7 @@ let deleteFromQ agent msg =
 
 let isAgentInInst agent inst = 
     match agent.RoleOf with
-    | Some (Member (sID)) | Some (Head (sID)) | Some (Monitor (sID)) | Some (Gatekeeper (sID)) -> sID = inst.ID
+    | Some (Member (sID)) -> sID = inst.ID
     | _ -> false
 
 let hasMembers agents inst = 

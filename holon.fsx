@@ -1,14 +1,9 @@
-module Holon
-
 type HolonID = int
 
 type Rate = High | Medium | Low
 
 type RoleIn = 
     | Member of HolonID
-    | Head of HolonID
-    | Gatekeeper of HolonID
-    | Monitor of HolonID
 
 type MessageType = 
     | Tax of HolonID * int                      // Tax(Agent, Amount)
