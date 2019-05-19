@@ -1,0 +1,5 @@
+.paket/
+packages/
+paket-files
+paket.dependencies
+paket.lock
