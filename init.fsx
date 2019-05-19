@@ -1,13 +1,13 @@
-#load "holon.fs"
-#load "platform.fs"
-#load "simulation.fs"
+#load "holon.fsx"
+#load "platform.fsx"
+#load "simulation.fsx"
 open Holon
 open Platform
 open Simulation
 
-let topCap = 1000
-let midCap = 1000
-let bottomCap = 50
+// let topCap = 1000
+// let midCap = 1000
+// let bottomCap = 50
 
 //let refillRateA = [High;High;Low;Low;Low;Low;High;High;High;High;Low;Low]
 //let refillRateB = [High;Low;Low;High;High;High;High;Low;Low;Low;Low;High]
@@ -48,9 +48,6 @@ let createAgent name id resMax = {def with Name=name; ID=id; ResourceCap=resMax}
 let createMemberAgent name id resMax inst role = 
     let actRole = 
         match role with
-        | "head" -> Some(Head(inst.ID)) 
-        | "monitor" -> Some(Monitor(inst.ID))
-        | "gatekeeper" -> Some(Gatekeeper(inst.ID))
         | "member" -> Some(Member(inst.ID)) 
         | _ -> None
     {createAgent name id resMax with RoleOf=actRole}
@@ -63,22 +60,16 @@ let createInstAgents nameLst inst currID resMax =
 
 //********************************************************************************************************************
 
-let init refillRateA refillRateB = 
+let init refillRateA refillRateB topCap midCap bottomCap = 
     let offices = createAgent "offices" 0 topCap
     let parks = {createMemberAgent "parks" 1 midCap offices "member" with RefillRate=refillRateA}
     let brooklyn = {createMemberAgent "brooklyn" 2 midCap offices "member" with RefillRate=refillRateB}
 
     let initParksAdmin = 
-        let ron = createMemberAgent "ron" 3 bottomCap parks "head"
-        let leslie = createMemberAgent "leslie" 4 bottomCap parks "gatekeeper"
-        let april = createMemberAgent "april" 5 bottomCap parks "monitor"
-        [parks; ron; leslie; april]
+        [parks]
 
     let initBrooklynAdmin = 
-        let ray = createMemberAgent "ray" 6 bottomCap brooklyn "head"
-        let terry = createMemberAgent "terry" 7 bottomCap brooklyn "gatekeeper"
-        let amy = createMemberAgent "amy" 8 bottomCap brooklyn "gatekeeper"
-        [brooklyn; ray; terry; amy]
+        [brooklyn]
 
     let initAllAdmins = [offices] @ initParksAdmin @ initBrooklynAdmin
 

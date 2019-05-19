@@ -1,4 +1,5 @@
-module Simulation
+#load "holon.fsx"
+#load "platform.fsx"
 open Holon
 open Platform
 
@@ -69,7 +70,8 @@ let simulate agentLst simType time tmax taxBracket taxRate subsidyRate =
             |> List.choose id
         topHolon.MessageQueue <- topHolon.MessageQueue @ reportTax        
                
-   
+        
+                
         // If msg is Tax, taxes that member and gives it to boss
         // and Tax msg is removed
         let takeTax members boss msg = 
@@ -84,29 +86,55 @@ let simulate agentLst simType time tmax taxBracket taxRate subsidyRate =
             | m -> Some m
         // If msg is Subsidy, subsidises that member by taking from boss
         // and Subsidy msg is removed
-        let giveSubsidy members boss msg =
-            match msg with
-            | Subsidy(i, amt) when amt<=boss.Resources ->
+        let giveSubsidy enough members boss msg =
+            match enough, msg with
+            | true, Subsidy(i, amt) ->
                 let inst = List.find (fun agent -> agent.ID=i) members
                 inst.Resources <- inst.Resources + amt
                 boss.Resources <- boss.Resources - amt
                 inst.MessageQueue <- inst.MessageQueue @ [Subsidy(i,amt)]
                 printfn "inst %s got SUBSIDY: %i :)" inst.Name amt
                 None
-            | Subsidy(i,amt) -> 
+            | false, Subsidy(i,_) -> 
                 let inst = List.find (fun agent -> agent.ID=i) members
-                // strict because strict guardrails
-                printfn "inst %s's subsidy of %i is refused because bank only has %i" inst.Name amt boss.Resources  
-                None          
-            | m -> Some m            
-        let taxAndClearQ inst = 
-            inst.MessageQueue
-            |> List.map (takeTax midHolonLst topHolon)
-            |> List.choose id
-            |> List.map (giveSubsidy midHolonLst topHolon)
-            |> List.choose id
-        topHolon.MessageQueue <- taxAndClearQ topHolon      
+                let bank = boss.Resources
+                let getPopulation acc holon = 
+                    let baseMembers = getBaseMembers agentLst holon
+                    acc + List.length baseMembers
+                let totalMembers = getPopulation 0 boss
+                let sub = bank/totalMembers
 
+                inst.Resources <- inst.Resources + sub
+                boss.Resources <- boss.Resources - sub 
+                inst.MessageQueue <- inst.MessageQueue @ [Subsidy(i,sub)]
+                printfn "inst %s only got subsidy %i because not enough" inst.Name sub
+                None          
+            | _, m -> Some m  
+
+        // TODO: separate into two -> tax first then figure out if there's enough for subsidy
+        let taxNClearQ inst = 
+            inst.MessageQueue
+            |> List.map (takeTax midHolonLst inst) 
+            |> List.choose id
+        topHolon.MessageQueue <- taxNClearQ topHolon
+
+        let subAndClearQ inst = 
+            let enoughRes bank msg = 
+                match msg with
+                | Subsidy(_,amt) -> bank - amt
+                | _ -> bank
+            let remains = List.fold enoughRes inst.Resources inst.MessageQueue 
+            match remains with
+            | remainder when remainder>=0 ->
+                inst.MessageQueue
+                |> List.map (giveSubsidy true midHolonLst inst)
+                |> List.choose id
+            | _ ->
+                inst.MessageQueue
+                |> List.map (giveSubsidy false midHolonLst inst)   
+                |> List.choose id    
+        topHolon.MessageQueue <- subAndClearQ topHolon                 
+                   
         let satisfactionOfInst inst = 
             let netBenefit = 
                 let rec getInfoFromQ q = 
