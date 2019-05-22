@@ -94,7 +94,7 @@ let decideOnRefill inst time refillRate =
             printfn "did not set a refill rate for %s, will refill to max" inst.Name
             max
         | nr ->        
-            let timeBlock = time/1
+            let timeBlock = time/5
             let seasonInd = timeBlock%nr // which season are we in
             let season = refillRate.[seasonInd] 
        
@@ -102,7 +102,19 @@ let decideOnRefill inst time refillRate =
                 | High -> max
                 | Medium -> 0.5*max
                 | Low -> 0.25*max
-    int(amtFloat)        
+    int(amtFloat)    
+
+let plotRefillRate max refillRate time  = 
+    let nrOfSeasons = List.length refillRate
+    let maxFloat = float(max)
+
+    let timeBlock = time/5
+    let seasonInd = timeBlock%nrOfSeasons
+    let season = refillRate.[seasonInd]
+    match season with
+    | High -> int(maxFloat)
+    | Medium -> int(0.5*maxFloat)
+    | Low -> int(0.25*maxFloat)
     
 let getGenerationAmt inst time = 
     let refillRate = inst.RefillRate
@@ -125,7 +137,7 @@ let calculateTaxSubsidy taxBracket taxRate needPayTax subsidyRate agentLst inst 
         None  
     | (xPerMem, _) when xPerMem < taxBracket ->
         // TODO: wrong to print it here, bc subsidy might get rejected 
-        printfn "%s's members get %i each" inst.Name (xPerMem + subsidyRate)
+        printfn "%s's members get %i each, with subsidy of %i to get %i in total" inst.Name xPerMem subsidyRate (xPerMem + subsidyRate)
         Some (Subsidy(inst.ID, subsidyRate*totalMembers))
     | x, _ -> 
         printfn "%s's members get %i each" inst.Name x

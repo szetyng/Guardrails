@@ -74,16 +74,24 @@ let simulate agentLst simType time tmax taxBracket taxRate subsidyRate =
                 
         // If msg is Tax, taxes that member and gives it to boss
         // and Tax msg is removed
-        let takeTax members boss msg = 
-            match msg with
-            | Tax(i, amt) -> 
+        // TODO: take only up to max
+        let takeTax optAmt members boss msg = 
+            match optAmt, msg with
+            | None, Tax(i, amt) -> 
                 let inst = List.find (fun agent -> agent.ID=i) members 
                 inst.Resources <- inst.Resources - amt
                 boss.Resources <- boss.Resources + amt
                 inst.MessageQueue <- inst.MessageQueue @ [Tax(i,amt)]
                 printfn "inst %s paid TAX: %i :(" inst.Name amt
                 None
-            | m -> Some m
+            | Some amt, Tax(i, _) ->
+                let inst = List.find (fun agent -> agent.ID=i) members
+                inst.Resources <- inst.Resources - amt
+                boss.Resources <- boss.Resources + amt
+                inst.MessageQueue <- inst.MessageQueue @ [Tax(i,amt)]
+                printfn "inst %s only has to pay %i in tax bc max" inst.Name amt
+                None            
+            | _, m -> Some m
         // If msg is Subsidy, subsidises that member by taking from boss
         // and Subsidy msg is removed
         let giveSubsidy enough members boss msg =
@@ -113,9 +121,22 @@ let simulate agentLst simType time tmax taxBracket taxRate subsidyRate =
 
         // TODO: separate into two -> tax first then figure out if there's enough for subsidy
         let taxNClearQ inst = 
-            inst.MessageQueue
-            |> List.map (takeTax midHolonLst inst) 
-            |> List.choose id
+            let max = inst.ResourceCap
+            let enoughTax bank msg = 
+                match msg with
+                | Tax(_,amt) -> bank + amt
+                | _ -> bank
+            let afterTax = List.fold enoughTax inst.Resources inst.MessageQueue
+            match afterTax with
+            | newBank when newBank<=max -> 
+                inst.MessageQueue
+                |> List.map (takeTax None midHolonLst inst) 
+                |> List.choose id
+            | _ ->
+                let needTax = (max - inst.Resources)/2
+                inst.MessageQueue
+                |> List.map (takeTax (Some needTax) midHolonLst inst)    
+                |> List.choose id        
         topHolon.MessageQueue <- taxNClearQ topHolon
 
         let subAndClearQ inst = 
