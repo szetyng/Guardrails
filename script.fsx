@@ -1,4 +1,3 @@
-open System.Windows.Forms
 open System.Drawing
 
 #load "holon.fsx"
@@ -14,15 +13,17 @@ open Init
 open FSharp.Charting
 
 let simType = Reasonable
-let topCap = 1000
-let taxRate = 10
+let topCap = 3500
+let taxRate = 20
 let subsidyRate = 10
 
 let timeBegin = 0
 let timeMax = 250
 let taxBracket = 25
-let refillRateA = [High; High; Low; Low; Low; High; High; Low]//; Low; Low; High]
-let refillRateB = [Low; High; High; Low; High; High; Low; Low]//; Low; Low; Low]
+let refillRateA = [High;High;Low;Low;High]
+let refillRateB = [High;Low;High;Low;Low]
+// let refillRateA = [High; High; Low; Low; Low; High; High; Low]//; Low; Low; High]
+// let refillRateB = [Low; High; High; Low; High; High; Low; Low]//; Low; Low; Low]
 // let refillRateA = [Low;Low;Low;Low;High;High;High;High]
 // let refillRateB = [High;High;High;High;Low;Low;Low;Low]
 let midCap = 1000
@@ -76,7 +77,7 @@ Chart.Combine ([
 |> Chart.WithLegend(InsideArea=true) 
 |> Chart.WithTitle("Net benefit of the institutions") 
 |> Chart.WithXAxis(Title="Time")
-|> Chart.WithYAxis(Title="Benefit level", Max=3000.0, Min=(-4000.0))
+|> Chart.WithYAxis(Title="Benefit level")//, Max=3000.0, Min=(-4000.0))
 |> Chart.Show
 
 Chart.Combine ([
