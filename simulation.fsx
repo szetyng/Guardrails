@@ -66,7 +66,7 @@ let simulate agentLst simType time tmax taxBracket taxRate subsidyRate =
 
         let reportTax = 
             midHolonLst
-            |> List.map (calculateTaxSubsidy taxBracket taxRate needPayTax subsidyRate agentLst) 
+            |> List.map (calculateTaxSubsidy taxBracket taxRate needPayTax subsidyRate agentLst time) 
             |> List.choose id
         topHolon.MessageQueue <- topHolon.MessageQueue @ reportTax        
                
@@ -76,20 +76,25 @@ let simulate agentLst simType time tmax taxBracket taxRate subsidyRate =
         // and Tax msg is removed
         // TODO: take only up to max
         let takeTax optAmt members boss msg = 
+            let skimCost = boss.MonitoringCost
             match optAmt, msg with
             | None, Tax(i, amt) -> 
                 let inst = List.find (fun agent -> agent.ID=i) members 
+                let nr = List.length (getBaseMembers agentLst inst) 
+                let skim = skimCost * nr
                 inst.Resources <- inst.Resources - amt
-                boss.Resources <- boss.Resources + amt
+                boss.Resources <- boss.Resources + amt - skim
                 inst.MessageQueue <- inst.MessageQueue @ [Tax(i,amt)]
-                printfn "inst %s paid TAX: %i :(" inst.Name amt
+                printfn "inst %s paid TAX: %i :(, upper skimmed %i" inst.Name amt skim
                 None
             | Some amt, Tax(i, _) ->
                 let inst = List.find (fun agent -> agent.ID=i) members
+                let nr = List.length (getBaseMembers agentLst inst)
+                let skim = skimCost * nr
                 inst.Resources <- inst.Resources - amt
-                boss.Resources <- boss.Resources + amt
+                boss.Resources <- boss.Resources + amt - skim
                 inst.MessageQueue <- inst.MessageQueue @ [Tax(i,amt)]
-                printfn "inst %s only has to pay %i in tax bc max" inst.Name amt
+                printfn "inst %s only has to pay %i in tax bc max, upper skimmed %i" inst.Name amt skim
                 None            
             | _, m -> Some m
         // If msg is Subsidy, subsidises that member by taking from boss

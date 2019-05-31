@@ -13,31 +13,33 @@ open Init
 open FSharp.Charting
 
 let simType = Reasonable
-let topCap = 3500
+let topCap = 4000
 let taxRate = 20
-let subsidyRate = 10
+let monCost = 10
+//let subsidyRate = 10
 
 let timeBegin = 0
 let timeMax = 250
 let taxBracket = 25
-let refillRateA = [High;High;Low;Low;High]
-let refillRateB = [High;Low;High;Low;Low]
-// let refillRateA = [High; High; Low; Low; Low; High; High; Low]//; Low; Low; High]
-// let refillRateB = [Low; High; High; Low; High; High; Low; Low]//; Low; Low; Low]
+// let refillRateA = [High;High;Low;Low;High]
+// let refillRateB = [High;Low;High;Low;Low]
+let refillRateA = [High; High; Low; Low; Low; High; High; Low]//; Low; Low; High]
+let refillRateB = [Low; High; High; Low; High; High; Low; Low]//; Low; Low; Low]
 // let refillRateA = [Low;Low;Low;Low;High;High;High;High]
 // let refillRateB = [High;High;High;High;Low;Low;Low;Low]
 let midCap = 1000
-let bottomCap = 50
+let bottomCap = 40
+let subsidyRate = taxRate - monCost
 
 
-let allAgents = init refillRateA refillRateB topCap midCap bottomCap
+let allAgents = init refillRateA refillRateB monCost topCap midCap bottomCap
 let answer = simulate allAgents simType timeBegin timeMax taxBracket taxRate subsidyRate
 
 // let transformSatis state = 
 //     let getSatis acc state = 
 //         let res,ben = state
 //         match ben with
-//         | 0 when res=midCap -> acc //+ 125 // get dynamic version
+//         | 0 when res=midCap -> acc + 250 // get dynamic version
 //         | amt -> acc + amt
 //     let lst = List.map2 (fun r b -> r,b) state.ResourcesState state.CurrBenefit
 //     let satis = List.scan (getSatis) 0 lst |> List.tail
@@ -92,5 +94,4 @@ Chart.Combine ([
 |> Chart.WithXAxis(Title="Time")
 |> Chart.WithYAxis(Title="Resource level", Max=50.0, Min=0.0)
 |> Chart.Show
-
 

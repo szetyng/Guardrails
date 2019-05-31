@@ -23,7 +23,8 @@ let def =
         MessageQueue = [];
         RoleOf = None;
         ResourceCap = 500;
-        RefillRate = []
+        RefillRate = [];
+        MonitoringCost = 0
     }
 
 let parksNames = 
@@ -60,8 +61,8 @@ let createInstAgents nameLst inst currID resMax =
 
 //********************************************************************************************************************
 
-let init refillRateA refillRateB topCap midCap bottomCap = 
-    let offices = createAgent "offices" 0 topCap
+let init refillRateA refillRateB monCost topCap midCap bottomCap = 
+    let offices = {createAgent "offices" 0 topCap with MonitoringCost=monCost}
     let parks = {createMemberAgent "parks" 1 midCap offices "member" with RefillRate=refillRateA}
     let brooklyn = {createMemberAgent "brooklyn" 2 midCap offices "member" with RefillRate=refillRateB}
 

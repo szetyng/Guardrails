@@ -18,6 +18,7 @@ type Holon =
         mutable MessageQueue : MessageType list;
         RefillRate : Rate list;
         mutable RoleOf : RoleIn option;
+        MonitoringCost : int;
     }
 
 
