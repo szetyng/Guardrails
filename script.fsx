@@ -13,23 +13,25 @@ open Init
 open FSharp.Charting
 
 let simType = Reasonable
-let topCap = 4000
+let topCap = 3000
 let taxRate = 20
-let monCost = 10
-//let subsidyRate = 10
+let monCost = 2
+let subsidyRate = 5
 
 let timeBegin = 0
-let timeMax = 250
+let timeMax = 20
 let taxBracket = 25
+let refillRateA = [High;High;High;High;High; High;High;High;High;High; Low;Low;Low;Low;Low;      Low; Low;Low;Low;Low;Low;      High;High;High;High;High; High;High;High;High;High; Low]
+let refillRateB = [Low;Low;Low;Low;Low;      High;High;High;High;High; High;High;High;High;High; Low; High;High;High;High;High; High;High;High;High;High; Low;Low;Low;Low;Low;      Low]
 // let refillRateA = [High;High;Low;Low;High]
 // let refillRateB = [High;Low;High;Low;Low]
-let refillRateA = [High; High; Low; Low; Low; High; High; Low]//; Low; Low; High]
-let refillRateB = [Low; High; High; Low; High; High; Low; Low]//; Low; Low; Low]
+// let refillRateA = [High; High; Low; Low; Low; High; High; Low]//; Low; Low; High]
+// let refillRateB = [Low; High; High; Low; High; High; Low; Low]//; Low; Low; Low]
 // let refillRateA = [Low;Low;Low;Low;High;High;High;High]
 // let refillRateB = [High;High;High;High;Low;Low;Low;Low]
 let midCap = 1000
 let bottomCap = 40
-let subsidyRate = taxRate - monCost
+//let subsidyRate = taxRate - monCost
 
 
 let allAgents = init refillRateA refillRateB monCost topCap midCap bottomCap

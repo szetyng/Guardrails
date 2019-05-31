@@ -1,3 +1,4 @@
+open System.Web.UI.WebControls
 #load "holon.fsx"
 #load "platform.fsx"
 open Holon
@@ -66,7 +67,7 @@ let simulate agentLst simType time tmax taxBracket taxRate subsidyRate =
 
         let reportTax = 
             midHolonLst
-            |> List.map (calculateTaxSubsidy taxBracket taxRate needPayTax subsidyRate agentLst time) 
+            |> List.map (calculateTaxSubsidy taxBracket taxRate needPayTax subsidyRate agentLst) 
             |> List.choose id
         topHolon.MessageQueue <- topHolon.MessageQueue @ reportTax        
                
@@ -125,24 +126,31 @@ let simulate agentLst simType time tmax taxBracket taxRate subsidyRate =
             | _, m -> Some m  
 
         // TODO: separate into two -> tax first then figure out if there's enough for subsidy
-        let taxNClearQ inst = 
+        let taxNClearQ members inst = 
             let max = inst.ResourceCap
-            let enoughTax bank msg = 
+            let skimCost = inst.MonitoringCost
+            let taxAndSkim acc msg =
+                let bank, prevInst, prevSkim = acc 
                 match msg with
-                | Tax(_,amt) -> bank + amt
-                | _ -> bank
-            let afterTax = List.fold enoughTax inst.Resources inst.MessageQueue
+                | Tax(i,amt) -> 
+                    let memInst = List.find (fun agent -> agent.ID=i) members 
+                    let nrBaseMems = List.length (getBaseMembers agentLst memInst)
+                    let skim = skimCost * nrBaseMems
+                    (bank + amt - skim, prevInst + 1, prevSkim + skim)
+                | _ -> acc
+            let afterTax, nrInst, skim = List.fold taxAndSkim (inst.Resources,0,0) inst.MessageQueue
             match afterTax with
             | newBank when newBank<=max -> 
                 inst.MessageQueue
                 |> List.map (takeTax None midHolonLst inst) 
                 |> List.choose id
             | _ ->
-                let needTax = (max - inst.Resources)/2
+                let taxDiff = max - inst.Resources
+                let needTax = (taxDiff + skim)/nrInst
                 inst.MessageQueue
                 |> List.map (takeTax (Some needTax) midHolonLst inst)    
                 |> List.choose id        
-        topHolon.MessageQueue <- taxNClearQ topHolon
+        topHolon.MessageQueue <- taxNClearQ midHolonLst topHolon
 
         let subAndClearQ inst = 
             let enoughRes bank msg = 
