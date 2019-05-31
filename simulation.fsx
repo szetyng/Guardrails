@@ -10,9 +10,9 @@ type SimType = Strict | Reasonable | Lenient
 type HolonState = 
     {
         SupraID : HolonID;
-        ResourcesState : int list;
-        CurrBenefit : int list;
-        RunningBenefit : int list;
+        ResourcesState : float list;
+        CurrBenefit : float list;
+        RunningBenefit : float list;
     }
 
 let random = System.Random()
@@ -81,21 +81,21 @@ let simulate agentLst simType time tmax taxBracket taxRate subsidyRate =
             match optAmt, msg with
             | None, Tax(i, amt) -> 
                 let inst = List.find (fun agent -> agent.ID=i) members 
-                let nr = List.length (getBaseMembers agentLst inst) 
+                let nr = List.length (getBaseMembers agentLst inst) |> float
                 let skim = skimCost * nr
                 inst.Resources <- inst.Resources - amt
                 boss.Resources <- boss.Resources + amt - skim
                 inst.MessageQueue <- inst.MessageQueue @ [Tax(i,amt)]
-                printfn "inst %s paid TAX: %i :(, upper skimmed %i" inst.Name amt skim
+                printfn "inst %s paid TAX: %f :(, upper skimmed %f" inst.Name amt skim
                 None
             | Some amt, Tax(i, _) ->
                 let inst = List.find (fun agent -> agent.ID=i) members
-                let nr = List.length (getBaseMembers agentLst inst)
+                let nr = List.length (getBaseMembers agentLst inst) |> float
                 let skim = skimCost * nr
                 inst.Resources <- inst.Resources - amt
                 boss.Resources <- boss.Resources + amt - skim
                 inst.MessageQueue <- inst.MessageQueue @ [Tax(i,amt)]
-                printfn "inst %s only has to pay %i in tax bc max, upper skimmed %i" inst.Name amt skim
+                printfn "inst %s only has to pay %f in tax bc max, upper skimmed %f" inst.Name amt skim
                 None            
             | _, m -> Some m
         // If msg is Subsidy, subsidises that member by taking from boss
@@ -107,7 +107,7 @@ let simulate agentLst simType time tmax taxBracket taxRate subsidyRate =
                 inst.Resources <- inst.Resources + amt
                 boss.Resources <- boss.Resources - amt
                 inst.MessageQueue <- inst.MessageQueue @ [Subsidy(i,amt)]
-                printfn "inst %s got SUBSIDY: %i :)" inst.Name amt
+                printfn "inst %s got SUBSIDY: %f :)" inst.Name amt
                 None
             | false, Subsidy(i,_) -> 
                 let inst = List.find (fun agent -> agent.ID=i) members
@@ -115,13 +115,13 @@ let simulate agentLst simType time tmax taxBracket taxRate subsidyRate =
                 let getPopulation acc holon = 
                     let baseMembers = getBaseMembers agentLst holon
                     acc + List.length baseMembers
-                let totalMembers = getPopulation 0 boss
+                let totalMembers = getPopulation 0 boss |> float
                 let sub = bank/totalMembers
 
                 inst.Resources <- inst.Resources + sub
                 boss.Resources <- boss.Resources - sub 
                 inst.MessageQueue <- inst.MessageQueue @ [Subsidy(i,sub)]
-                printfn "inst %s only got subsidy %i because not enough" inst.Name sub
+                printfn "inst %s only got subsidy %f because not enough" inst.Name sub
                 None          
             | _, m -> Some m  
 
@@ -134,11 +134,11 @@ let simulate agentLst simType time tmax taxBracket taxRate subsidyRate =
                 match msg with
                 | Tax(i,amt) -> 
                     let memInst = List.find (fun agent -> agent.ID=i) members 
-                    let nrBaseMems = List.length (getBaseMembers agentLst memInst)
+                    let nrBaseMems = List.length (getBaseMembers agentLst memInst) |> float
                     let skim = skimCost * nrBaseMems
-                    (bank + amt - skim, prevInst + 1, prevSkim + skim)
+                    (bank + amt - skim, prevInst + 1.0, prevSkim + skim)
                 | _ -> acc
-            let afterTax, nrInst, skim = List.fold taxAndSkim (inst.Resources,0,0) inst.MessageQueue
+            let afterTax, nrInst, skim = List.fold taxAndSkim (inst.Resources,0.0,0.0) inst.MessageQueue
             match afterTax with
             | newBank when newBank<=max -> 
                 inst.MessageQueue
@@ -159,7 +159,7 @@ let simulate agentLst simType time tmax taxBracket taxRate subsidyRate =
                 | _ -> bank
             let remains = List.fold enoughRes inst.Resources inst.MessageQueue 
             match remains with
-            | remainder when remainder>=0 ->
+            | remainder when remainder>=0.0 ->
                 inst.MessageQueue
                 |> List.map (giveSubsidy true midHolonLst inst)
                 |> List.choose id
@@ -176,11 +176,11 @@ let simulate agentLst simType time tmax taxBracket taxRate subsidyRate =
                     | Tax(i,amt)::_ when i=inst.ID -> -amt
                     | Subsidy(i,amt)::_ when i=inst.ID -> amt
                     | _::rest -> getInfoFromQ rest
-                    | [] -> 0
+                    | [] -> 0.0
                 getInfoFromQ inst.MessageQueue
 
             // Consume the resources, but not for topHolon acting as bank
-            if hasBoss supraHolonLst inst then inst.Resources <- 0  
+            if hasBoss supraHolonLst inst then inst.Resources <- 0.0  
             else ()
 
             let clearMsg msgType msg = 
@@ -190,9 +190,9 @@ let simulate agentLst simType time tmax taxBracket taxRate subsidyRate =
                 | _, m -> Some m
             let qWithoutTax = 
                 inst.MessageQueue
-                |> List.map (clearMsg (Tax(inst.ID,0))) 
+                |> List.map (clearMsg (Tax(inst.ID,0.0))) 
                 |> List.choose id
-                |> List.map (clearMsg (Subsidy(inst.ID,0)))
+                |> List.map (clearMsg (Subsidy(inst.ID,0.0)))
                 |> List.choose id   
 
             inst.MessageQueue <- qWithoutTax
@@ -224,6 +224,6 @@ let simulate agentLst simType time tmax taxBracket taxRate subsidyRate =
             runSimulate (t+1) newState
             
     // include ID to be safe
-    let createInitState holon = {SupraID=holon.ID; ResourcesState=[holon.Resources]; CurrBenefit = [0]; RunningBenefit=[0]}
+    let createInitState holon = {SupraID=holon.ID; ResourcesState=[holon.Resources]; CurrBenefit = [0.0]; RunningBenefit=[0.0]}
     let initState = List.map createInitState supraHolonLst    
     runSimulate time initState 

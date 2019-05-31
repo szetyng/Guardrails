@@ -13,14 +13,14 @@ open Init
 open FSharp.Charting
 
 let simType = Reasonable
-let topCap = 3000
-let taxRate = 20
-let monCost = 2
-let subsidyRate = 5
+let topCap = 3000.0
+let taxRate = 20.0
+let monCost = 5.0
+let subsidyRate = 5.0
 
 let timeBegin = 0
-let timeMax = 20
-let taxBracket = 25
+let timeMax = 250
+let taxBracket = 25.0
 let refillRateA = [High;High;High;High;High; High;High;High;High;High; Low;Low;Low;Low;Low;      Low; Low;Low;Low;Low;Low;      High;High;High;High;High; High;High;High;High;High; Low]
 let refillRateB = [Low;Low;Low;Low;Low;      High;High;High;High;High; High;High;High;High;High; Low; High;High;High;High;High; High;High;High;High;High; Low;Low;Low;Low;Low;      Low]
 // let refillRateA = [High;High;Low;Low;High]
@@ -29,8 +29,8 @@ let refillRateB = [Low;Low;Low;Low;Low;      High;High;High;High;High; High;High
 // let refillRateB = [Low; High; High; Low; High; High; Low; Low]//; Low; Low; Low]
 // let refillRateA = [Low;Low;Low;Low;High;High;High;High]
 // let refillRateB = [High;High;High;High;Low;Low;Low;Low]
-let midCap = 1000
-let bottomCap = 40
+let midCap = 1000.0
+let bottomCap = 40.0
 //let subsidyRate = taxRate - monCost
 
 
@@ -49,7 +49,7 @@ let answer = simulate allAgents simType timeBegin timeMax taxBracket taxRate sub
 
 
 
-let runningTotal = List.scan (+) 0 >> List.tail
+let runningTotal = List.scan (+) 0.0 >> List.tail
 let transformCumulative state = 
     let newBen = runningTotal state.CurrBenefit
     {state with RunningBenefit=newBen}
@@ -61,12 +61,12 @@ let cumAnswer =
 printfn "%A" cumAnswer
 let parksCurrBen = cumAnswer.[1].CurrBenefit
 let parksRes = cumAnswer.[1].ResourcesState
-let parksIndRes = List.map (fun i -> i/25) parksRes
+let parksIndRes = List.map (fun i -> i/25.0) parksRes
 let parksRunningBen = cumAnswer.[1].RunningBenefit
 
 let brookCurrBen = cumAnswer.[2].CurrBenefit
 let brookRes = cumAnswer.[2].ResourcesState
-let brookIndRes = List.map (fun i -> i/25) brookRes
+let brookIndRes = List.map (fun i -> i/25.0) brookRes
 let brookRunningBen = cumAnswer.[2].RunningBenefit
 
 let parksRate = List.map (plotRefillRate midCap refillRateA) [0..timeMax]

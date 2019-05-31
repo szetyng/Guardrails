@@ -6,19 +6,19 @@ type RoleIn =
     | Member of HolonID
 
 type MessageType = 
-    | Tax of HolonID * int                      // Tax(Agent, Amount)
-    | Subsidy of HolonID * int 
+    | Tax of HolonID * float                      // Tax(Agent, Amount)
+    | Subsidy of HolonID * float 
 
 type Holon =
     { 
         ID : HolonID;
         Name : string;
-        mutable Resources : int;
-        ResourceCap : int;
+        mutable Resources : float;
+        ResourceCap : float;
         mutable MessageQueue : MessageType list;
         RefillRate : Rate list;
         mutable RoleOf : RoleIn option;
-        MonitoringCost : int;
+        MonitoringCost : float;
     }
 
 

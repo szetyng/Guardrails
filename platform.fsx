@@ -76,17 +76,17 @@ let refillResources inst r =
     let newTotal = 
         match inst.Resources+r with
         | newTot when newTot<=max ->    
-            printfn "inst %s has refilled its resources by %i to %i" inst.Name r newTot
+            printfn "inst %s has refilled its resources by %f to %f" inst.Name r newTot
             newTot
         | _ -> 
-            printfn "inst %s has refilled its resources to the max: %i" inst.Name max
+            printfn "inst %s has refilled its resources to the max: %f" inst.Name max
             max
     inst.Resources <- newTotal 
 
 /// refillRate example: [High;High;Medium;Low]
 let decideOnRefill inst time refillRate = 
     let nrOfSeasons = List.length refillRate 
-    let max = float(inst.ResourceCap)
+    let max = inst.ResourceCap
 
     let amtFloat = 
         match nrOfSeasons with
@@ -102,19 +102,19 @@ let decideOnRefill inst time refillRate =
                 | High -> max
                 | Medium -> 0.5*max
                 | Low -> 0.25*max
-    int(amtFloat)    
+    amtFloat    
 
 let plotRefillRate max refillRate time  = 
     let nrOfSeasons = List.length refillRate
-    let maxFloat = float(max)
+    //let maxFloat = float(max)
 
     let timeBlock = time/1
     let seasonInd = timeBlock%nrOfSeasons
     let season = refillRate.[seasonInd]
     match season with
-    | High -> int(maxFloat)
-    | Medium -> int(0.5*maxFloat)
-    | Low -> int(0.25*maxFloat)
+    | High -> max
+    | Medium -> 0.5*max
+    | Low -> 0.25*max
     
 let getGenerationAmt inst time = 
     let refillRate = inst.RefillRate
@@ -126,19 +126,19 @@ let calculateTaxSubsidy taxBracket taxRate needPayTax subsidyRate agentLst inst 
         let baseMembers = getBaseMembers agentLst holon
         acc + List.length baseMembers
 
-    let totalMembers = getPopulation 0 inst
+    let totalMembers = float(getPopulation 0 inst)
     let resPerMember = inst.Resources/totalMembers
     match resPerMember, needPayTax with
     | (xPerMem, true) when xPerMem > taxBracket -> 
-        printfn "%s's members get %i each" inst.Name (xPerMem - taxRate)
+        printfn "%s's members get %f each" inst.Name (xPerMem - taxRate)
         Some (Tax(inst.ID, taxRate*totalMembers))
     | (xPerMem, false) when xPerMem > taxBracket ->
-        printfn "%s's members get %i each" inst.Name (xPerMem)      
+        printfn "%s's members get %f each" inst.Name (xPerMem)      
         None  
     | (xPerMem, _) when xPerMem < taxBracket ->
         // TODO: wrong to print it here, bc subsidy might get rejected 
-        printfn "%s's members get %i each, with subsidy of %i to get %i in total" inst.Name xPerMem subsidyRate (xPerMem + subsidyRate)
+        printfn "%s's members get %f each, with subsidy of %f to get %f in total" inst.Name xPerMem subsidyRate (xPerMem + subsidyRate)
         Some (Subsidy(inst.ID, subsidyRate*totalMembers))
     | x, _ -> 
-        printfn "%s's members get %i each" inst.Name x
+        printfn "%s's members get %f each" inst.Name x
         None

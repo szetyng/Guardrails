@@ -19,12 +19,12 @@ let def =
     {     
         ID = 0;   
         Name = " ";
-        Resources = 0;
+        Resources = 0.0;
         MessageQueue = [];
         RoleOf = None;
-        ResourceCap = 500;
+        ResourceCap = 500.0;
         RefillRate = [];
-        MonitoringCost = 0
+        MonitoringCost = 0.0
     }
 
 let parksNames = 
