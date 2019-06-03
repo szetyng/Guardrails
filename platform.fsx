@@ -94,7 +94,7 @@ let decideOnRefill inst time refillRate =
             printfn "did not set a refill rate for %s, will refill to max" inst.Name
             max
         | nr ->        
-            let timeBlock = time/1
+            let timeBlock = time/5
             let seasonInd = timeBlock%nr // which season are we in
             let season = refillRate.[seasonInd] 
        
@@ -108,7 +108,7 @@ let plotRefillRate max refillRate time  =
     let nrOfSeasons = List.length refillRate
     //let maxFloat = float(max)
 
-    let timeBlock = time/1
+    let timeBlock = time/5
     let seasonInd = timeBlock%nrOfSeasons
     let season = refillRate.[seasonInd]
     match season with

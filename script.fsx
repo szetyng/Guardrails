@@ -13,20 +13,20 @@ open Init
 open FSharp.Charting
 
 let simType = Reasonable
-let topCap = 3000.0
+let topCap = 1000.0
 let taxRate = 20.0
-let monCost = 5.0
-let subsidyRate = 5.0
+let monCost = 10.0
+let subsidyRate = 10.0
 
 let timeBegin = 0
 let timeMax = 250
 let taxBracket = 25.0
-let refillRateA = [High;High;High;High;High; High;High;High;High;High; Low;Low;Low;Low;Low;      Low; Low;Low;Low;Low;Low;      High;High;High;High;High; High;High;High;High;High; Low]
-let refillRateB = [Low;Low;Low;Low;Low;      High;High;High;High;High; High;High;High;High;High; Low; High;High;High;High;High; High;High;High;High;High; Low;Low;Low;Low;Low;      Low]
+//let refillRateA = [High;High;High;High;High; High;High;High;High;High; Low;Low;Low;Low;Low;      Low; Low;Low;Low;Low;Low;      High;High;High;High;High; High;High;High;High;High; Low]
+//let refillRateB = [Low;Low;Low;Low;Low;      High;High;High;High;High; High;High;High;High;High; Low; High;High;High;High;High; High;High;High;High;High; Low;Low;Low;Low;Low;      Low]
 // let refillRateA = [High;High;Low;Low;High]
 // let refillRateB = [High;Low;High;Low;Low]
-// let refillRateA = [High; High; Low; Low; Low; High; High; Low]//; Low; Low; High]
-// let refillRateB = [Low; High; High; Low; High; High; Low; Low]//; Low; Low; Low]
+let refillRateA = [High; High; Low; Low; Low; High; High; Low]//; Low; Low; High]
+let refillRateB = [Low; High; High; Low; High; High; Low; Low]//; Low; Low; Low]
 // let refillRateA = [Low;Low;Low;Low;High;High;High;High]
 // let refillRateB = [High;High;High;High;Low;Low;Low;Low]
 let midCap = 1000.0
@@ -41,10 +41,10 @@ let answer = simulate allAgents simType timeBegin timeMax taxBracket taxRate sub
 //     let getSatis acc state = 
 //         let res,ben = state
 //         match ben with
-//         | 0 when res=midCap -> acc + 250 // get dynamic version
+//         | 0.0 when res=midCap -> acc + 0.0 // get dynamic version
 //         | amt -> acc + amt
 //     let lst = List.map2 (fun r b -> r,b) state.ResourcesState state.CurrBenefit
-//     let satis = List.scan (getSatis) 0 lst |> List.tail
+//     let satis = List.scan (getSatis) 0.0 lst |> List.tail
 //     {state with RunningBenefit=satis}
 
 
