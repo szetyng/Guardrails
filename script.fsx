@@ -15,12 +15,14 @@ open FSharp.Charting
 let simType = Reasonable
 let topCap = 1000.0
 let taxRate = 20.0
-let monCost = 10.0
+let monCost = 5.0
 let subsidyRate = 10.0
 
 let timeBegin = 0
 let timeMax = 250
 let taxBracket = 25.0
+// let refillRateA = [High; High; Low; Low; High; High]//; Low; Low; High]
+// let refillRateB = [Low; High; High; High; High; Low]//; Low; Low; Low]
 //let refillRateA = [High;High;High;High;High; High;High;High;High;High; Low;Low;Low;Low;Low;      Low; Low;Low;Low;Low;Low;      High;High;High;High;High; High;High;High;High;High; Low]
 //let refillRateB = [Low;Low;Low;Low;Low;      High;High;High;High;High; High;High;High;High;High; Low; High;High;High;High;High; High;High;High;High;High; Low;Low;Low;Low;Low;      Low]
 // let refillRateA = [High;High;Low;Low;High]
