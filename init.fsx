@@ -24,7 +24,8 @@ let def =
         RoleOf = None;
         ResourceCap = 500.0;
         RefillRate = [];
-        MonitoringCost = 0.0
+        MonitoringCost = 0.0;
+        SupraResources = 0.0;
     }
 
 let parksNames = 

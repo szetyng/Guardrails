@@ -10,6 +10,7 @@ type SimType = Strict | Reasonable | Lenient
 type HolonState = 
     {
         SupraID : HolonID;
+        Salary : float list;                
         ResourcesState : float list;
         CurrBenefit : float list;
         RunningBenefit : float list;
@@ -69,8 +70,13 @@ let simulate agentLst simType time tmax taxBracket taxRate subsidyRate =
             midHolonLst
             |> List.map (calculateTaxSubsidy taxBracket taxRate needPayTax subsidyRate agentLst) 
             |> List.choose id
-        topHolon.MessageQueue <- topHolon.MessageQueue @ reportTax        
-               
+        topHolon.MessageQueue <- topHolon.MessageQueue @ reportTax  
+
+        let workPerSalary =             
+            match List.isEmpty topHolon.MessageQueue with 
+            | true -> 5.0*50.0
+                //topHolon.SupraResources <- topHolon.SupraResources + (5.0*50.0)
+            | false -> 0.0 //()        
         
                 
         // If msg is Tax, taxes that member and gives it to boss
@@ -85,48 +91,55 @@ let simulate agentLst simType time tmax taxBracket taxRate subsidyRate =
                 let skim = skimCost * nr
                 inst.Resources <- inst.Resources - amt
                 boss.Resources <- boss.Resources + amt - skim
+                //boss.SupraResources <- boss.SupraResources + skim - (nr*5.0) // monCost - work effort
                 inst.MessageQueue <- inst.MessageQueue @ [Tax(i,amt)]
-                printfn "inst %s paid TAX: %f :(, upper skimmed %f" inst.Name amt skim
-                None
+                printfn "inst %s paid TAX: %f :(, upper skimmed %f, used up %f to do work" inst.Name amt skim (nr*5.0)
+                None, skim - (nr*5.0) // monCost - work effort
             | Some amt, Tax(i, _) ->
                 let inst = List.find (fun agent -> agent.ID=i) members
                 let nr = List.length (getBaseMembers agentLst inst) |> float
                 let skim = skimCost * nr
                 inst.Resources <- inst.Resources - amt
                 boss.Resources <- boss.Resources + amt - skim
-                inst.MessageQueue <- inst.MessageQueue @ [Tax(i,amt)]
-                printfn "inst %s only has to pay %f in tax bc max, upper skimmed %f" inst.Name amt skim
-                None            
-            | _, m -> Some m
+                //boss.SupraResources <- boss.SupraResources + skim - (nr*5.0) // monCost - work effort
+                inst.MessageQueue <- inst.MessageQueue @ [Tax(i,amt)] 
+                printfn "inst %s only has to pay %f in tax bc max, upper skimmed %f, used up %f to do work" inst.Name amt skim (nr*5.0)
+                None, skim - (nr*5.0) // monCost - work effort            
+            | _, m -> Some m, 0.0
         // If msg is Subsidy, subsidises that member by taking from boss
         // and Subsidy msg is removed
         let giveSubsidy enough members boss msg =
             match enough, msg with
             | true, Subsidy(i, amt) ->
                 let inst = List.find (fun agent -> agent.ID=i) members
+                let nr = List.length (getBaseMembers agentLst inst) |> float
                 inst.Resources <- inst.Resources + amt
                 boss.Resources <- boss.Resources - amt
+                //boss.SupraResources <- boss.SupraResources - (nr*5.0)
                 inst.MessageQueue <- inst.MessageQueue @ [Subsidy(i,amt)]
-                printfn "inst %s got SUBSIDY: %f :)" inst.Name amt
-                None
+                printfn "inst %s got SUBSIDY: %f :), upper used up %f to do work" inst.Name amt (nr*5.0)
+                None, -(nr*5.0)
             | false, Subsidy(i,_) -> 
                 let inst = List.find (fun agent -> agent.ID=i) members
                 let bank = boss.Resources
+                // why on earth is getPopulation required for topHolon
                 let getPopulation acc holon = 
                     let baseMembers = getBaseMembers agentLst holon
                     acc + List.length baseMembers
-                let totalMembers = getPopulation 0 boss |> float
-                let sub = bank/totalMembers
+                let totalMidMembers = getPopulation 0 boss |> float
+                let sub = bank/totalMidMembers
+                let nr = List.length (getBaseMembers agentLst inst) |> float
 
                 inst.Resources <- inst.Resources + sub
                 boss.Resources <- boss.Resources - sub 
+                //boss.SupraResources <- boss.SupraResources - (nr*5.0)
                 inst.MessageQueue <- inst.MessageQueue @ [Subsidy(i,sub)]
-                printfn "inst %s only got subsidy %f because not enough" inst.Name sub
-                None          
-            | _, m -> Some m  
+                printfn "inst %s only got subsidy %f because not enough, upper used up %f to do work" inst.Name sub (nr*5.0)
+                None, -(nr*5.0)          
+            | _, m -> Some m, 0.0  
 
         // TODO: separate into two -> tax first then figure out if there's enough for subsidy
-        let taxNClearQ members inst = 
+        let taxNClearQ members inst wpsOld = 
             let max = inst.ResourceCap
             let skimCost = inst.MonitoringCost
             let taxAndSkim acc msg =
@@ -139,49 +152,74 @@ let simulate agentLst simType time tmax taxBracket taxRate subsidyRate =
                     (bank + amt - skim, prevInst + 1.0, prevSkim + skim)
                 | _ -> acc
             let afterTax, nrInst, skim = List.fold taxAndSkim (inst.Resources,0.0,0.0) inst.MessageQueue
-            match afterTax with
-            | newBank when newBank<=max -> 
-                inst.MessageQueue
-                |> List.map (takeTax None midHolonLst inst) 
-                |> List.choose id
-            | _ ->
-                let taxDiff = max - inst.Resources
-                let needTax = (taxDiff + skim)/nrInst
-                inst.MessageQueue
-                |> List.map (takeTax (Some needTax) midHolonLst inst)    
-                |> List.choose id        
-        topHolon.MessageQueue <- taxNClearQ midHolonLst topHolon
+            let redundantQInfo = 
+                match afterTax with
+                | newBank when newBank<=max -> 
+                    inst.MessageQueue
+                    |> List.map (takeTax None midHolonLst inst)             
+                | _ ->
+                    let taxDiff = max - inst.Resources
+                    let needTax = (taxDiff + skim)/nrInst
+                    inst.MessageQueue
+                    |> List.map (takeTax (Some needTax) midHolonLst inst)         
+            let wpsTax =  
+                redundantQInfo
+                |> List.map snd
+                |> List.fold (+) wpsOld  
+            let newQ = 
+                redundantQInfo  
+                |> List.map fst 
+                |> List.choose id   
+            newQ, wpsTax            
+        let taxQ, wpsTax = taxNClearQ midHolonLst topHolon workPerSalary                       
+        topHolon.MessageQueue <- taxQ
 
-        let subAndClearQ inst = 
+        let subAndClearQ inst wpsOld = 
             let enoughRes bank msg = 
                 match msg with
                 | Subsidy(_,amt) -> bank - amt
                 | _ -> bank
             let remains = List.fold enoughRes inst.Resources inst.MessageQueue 
-            match remains with
-            | remainder when remainder>=0.0 ->
-                inst.MessageQueue
-                |> List.map (giveSubsidy true midHolonLst inst)
+            let redundantQInfo = 
+                match remains with
+                | remainder when remainder>=0.0 ->
+                    inst.MessageQueue
+                    |> List.map (giveSubsidy true midHolonLst inst)
+                | _ ->
+                    inst.MessageQueue
+                    |> List.map (giveSubsidy false midHolonLst inst)   
+            let wps = 
+                redundantQInfo 
+                |> List.map snd
+                |> List.fold (+) wpsOld
+            let newQ =
+                redundantQInfo
+                |> List.map fst
                 |> List.choose id
-            | _ ->
-                inst.MessageQueue
-                |> List.map (giveSubsidy false midHolonLst inst)   
-                |> List.choose id    
-        topHolon.MessageQueue <- subAndClearQ topHolon                 
+            newQ, wps
+        let subQ, wpsSub = subAndClearQ topHolon wpsTax                  
+        topHolon.MessageQueue <- subQ    
+
+        topHolon.SupraResources <- topHolon.SupraResources + wpsSub             
                    
         let satisfactionOfInst inst = 
             let netBenefit = 
-                let rec getInfoFromQ q = 
-                    match inst.MessageQueue with
-                    | Tax(i,amt)::_ when i=inst.ID -> -amt
-                    | Subsidy(i,amt)::_ when i=inst.ID -> amt
-                    | _::rest -> getInfoFromQ rest
-                    | [] -> 0.0
-                getInfoFromQ inst.MessageQueue
+                match hasBoss supraHolonLst inst with
+                | false -> wpsSub 
+                | true -> 
+                    inst.Resources <- 0.0
+
+                    let rec getInfoFromQ q = 
+                        match inst.MessageQueue with
+                        | Tax(i,amt)::_ when i=inst.ID -> -amt
+                        | Subsidy(i,amt)::_ when i=inst.ID -> amt
+                        | _::rest -> getInfoFromQ rest
+                        | [] -> 0.0
+                    getInfoFromQ inst.MessageQueue
 
             // Consume the resources, but not for topHolon acting as bank
-            if hasBoss supraHolonLst inst then inst.Resources <- 0.0  
-            else ()
+            // if hasBoss supraHolonLst inst then inst.Resources <- 0.0  
+            // else ()
 
             let clearMsg msgType msg = 
                 match msgType,msg with
@@ -211,11 +249,12 @@ let simulate agentLst simType time tmax taxBracket taxRate subsidyRate =
             let updateState insts oldState = 
                 let oldRes = oldState.ResourcesState
                 let oldBen = oldState.CurrBenefit
+                let oldSal = oldState.Salary
                 let rec getS supras = 
                     match supras with
                     | h::_ when h.ID=oldState.SupraID -> 
                         //let accumBen = List.tail 
-                        {oldState with ResourcesState=oldRes @ [h.Resources]; CurrBenefit=oldBen @ [ (satisfactionOfInst h)]}
+                        {oldState with ResourcesState=oldRes @ [h.Resources]; CurrBenefit=oldBen @ [ (satisfactionOfInst h)]; Salary=oldSal @ [h.SupraResources]}
                     | _::rest -> getS rest
                     | [] -> oldState    
                 getS insts                            
@@ -224,6 +263,6 @@ let simulate agentLst simType time tmax taxBracket taxRate subsidyRate =
             runSimulate (t+1) newState
             
     // include ID to be safe
-    let createInitState holon = {SupraID=holon.ID; ResourcesState=[holon.Resources]; CurrBenefit = [0.0]; RunningBenefit=[0.0]}
+    let createInitState holon = {SupraID=holon.ID; ResourcesState=[holon.Resources]; CurrBenefit = [0.0]; RunningBenefit=[0.0]; Salary=[0.0]}
     let initState = List.map createInitState supraHolonLst    
     runSimulate time initState 

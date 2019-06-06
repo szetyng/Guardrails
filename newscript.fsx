@@ -18,7 +18,7 @@ type Update =
 
 
 let simType = Reasonable
-let topCap = 2000.0
+let topCap = 3000.0
 let taxRate = 20.0
 let monCost = 10.0
 let subsidyRate = 10.0
@@ -55,14 +55,22 @@ let transformState state =
         | ben when ben<0.0 -> updateSigma (Beta betaOk) oldSigma // not happy, expected tax
         | ben when ben=0.0 && consumed=midCap -> updateSigma (Alpha alphaGreat) oldSigma // very happy, did not pay tax
         | ben when ben=0.0 -> updateSigma (Beta betaHorr) oldSigma // very unhappy, did not get help
+
+    //let upper oldSigma currSal = 
+
     
     let lst = List.map2 (fun b r -> b,r) state.CurrBenefit state.ResourcesState
     let l = List.scan (check) 0.5 lst |> List.tail
+
+    //let l2 = List.scan (upper) 0.5 state.Salary |> List.tail
     {state with RunningBenefit=l}
 
 let transAnswer = 
     answer
     |> List.map transformState 
+
+let officesSalary = transAnswer.[0].Salary
+
 let parksCurrBen = transAnswer.[1].CurrBenefit
 let parksRes = transAnswer.[1].ResourcesState
 let parksIndRes = List.map (fun i -> i/25.0) parksRes
@@ -100,5 +108,8 @@ Chart.Combine ([
 |> Chart.WithTitle("Resources available for base level members")
 |> Chart.WithXAxis(Title="Time")
 |> Chart.WithYAxis(Title="Resource level", Max=50.0, Min=0.0)
+|> Chart.Show
+
+Chart.Line (officesSalary)
 |> Chart.Show
 

@@ -14,6 +14,7 @@ type Holon =
         ID : HolonID;
         Name : string;
         mutable Resources : float;
+        mutable SupraResources : float;
         ResourceCap : float;
         mutable MessageQueue : MessageType list;
         RefillRate : Rate list;
