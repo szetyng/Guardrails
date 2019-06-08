@@ -20,7 +20,7 @@ type Update =
 let simType = Reasonable
 // lenient = 250. reasonable = 3000. strict approx 70000
 // monCost =  [5,10], tax = 20, subsidy = 5
-let topCap = 250.0
+let topCap = 3000.0
 let taxRate = 20.0
 let monCost = 5.0
 let subsidyRate = 5.0
@@ -115,27 +115,27 @@ let brookRunningBen = transAnswer.[2].RunningBenefit
 printfn "%A" transAnswer
 
 Chart.Combine ([
-    Chart.Line (parksRunningBen, Name="Inst A")
-    Chart.Line (brookRunningBen, Name="Inst B")
-    Chart.Line (officesRunningBen, Name="Upper inst")
+    Chart.Line (parksRunningBen, Name="dCES A")
+    Chart.Line (brookRunningBen, Name="dCES B")
+    Chart.Line (officesRunningBen, Name="Aggregated dCES")
     //Chart.Line (parksRate, Name="Rate A", Color=Color.PaleTurquoise )
     //Chart.Line (brookRate, Name="Rate B", Color=Color.PaleGoldenrod)
 ]) 
 |> Chart.WithLegend(InsideArea=true) 
-|> Chart.WithTitle("Satisfaction of the institutions") 
+|> Chart.WithTitle("Satisfaction of the institutions", InsideArea=false) 
 |> Chart.WithXAxis(Title="Time", Min=0.0)
 |> Chart.WithYAxis(Title="Satisfaction level", Max=1.0, Min=0.0)//, Max=3000.0, Min=(-4000.0))
 |> Chart.Show
 
 Chart.Combine ([
     //Chart.Line (cumAnswer.[0].ResourcesState, Name="Top Inst", Color=Color.Black)
-    Chart.Line (parksIndRes, Name="Inst A")
-    Chart.Line (brookIndRes, Name="Inst B")
+    Chart.Line (parksIndRes, Name="dCES A")
+    Chart.Line (brookIndRes, Name="dCES B")
     //Chart.Line (parksRate, Name="parksRate", Color=Color.PaleTurquoise )
     //Chart.Line (brookRate, Name="brookRate", Color=Color.PaleGoldenrod)
 ]) 
 |> Chart.WithLegend(InsideArea=true) 
-|> Chart.WithTitle("Resources available for base level members")
+|> Chart.WithTitle("Resources available for a member Smart House", InsideArea=false)
 |> Chart.WithXAxis(Title="Time")
 |> Chart.WithYAxis(Title="Resource level", Max=50.0, Min=0.0)
 |> Chart.Show
