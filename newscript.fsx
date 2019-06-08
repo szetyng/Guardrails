@@ -49,8 +49,8 @@ let updateSigma coeff oldSigma =
     | Beta(b) -> oldSigma - b*oldSigma
 
 let transformUpperState state = 
-    let upper oldSigma benSal = 
-        let benefit, sal = benSal
+    let update oldSigma benefit = 
+        //let benefit, sal = benSal
         let mapToRange inputRange outputRange x = 
             let in1,in2 = inputRange
             let out1,out2 = outputRange
@@ -71,21 +71,12 @@ let transformUpperState state =
             | _ -> Alpha 0.0            
         let coeff = mapToGreek (0.1,0.2) (0.1,0.2) benefit // alphaRange = (0.05,0.1)
         updateSigma coeff oldSigma            
-
-
-        // match benefit with
-        // | ben when ben>250.0 -> updateSigma (Alpha 0.1) oldSigma // yay great
-        // | ben when ben>0.0 -> updateSigma (Alpha 0.05) oldSigma
-        // | ben when ben<0.0 -> updateSigma (Beta betaOk) oldSigma // boo ok
-        //     // the one above happens VERY often when monCost is low
-        // | ben when ben=0.0 -> updateSigma (Alpha alphaOk) oldSigma // yay ok
-
-    let lst = List.map2 (fun b s -> b,s) state.CurrBenefit state.Salary    
-    let l = List.scan (upper) 0.5 lst |> List.tail
+    //let lst = List.map2 (fun b s -> b,s) state.CurrBenefit state.Salary    
+    let l = List.scan (update) 0.5 state.CurrBenefit |> List.tail
     {state with RunningBenefit=l}
 
 let transformMidState state = 
-    let check oldSigma benCom = 
+    let update oldSigma benCom = 
         let benefit, consumed = benCom
         match benefit with
         | ben when ben>=subsidyRate*25.0 -> updateSigma (Alpha alphaOk) oldSigma // happy, expected sub
@@ -94,8 +85,7 @@ let transformMidState state =
         | ben when ben=0.0 && consumed=midCap -> updateSigma (Alpha alphaGreat) oldSigma // very happy, did not pay tax
         | ben when ben=0.0 -> updateSigma (Beta betaHorr) oldSigma // very unhappy, did not get help
     let lst = List.map2 (fun b r -> b,r) state.CurrBenefit state.ResourcesState
-    let l = List.scan (check) 0.5 lst |> List.tail
-
+    let l = List.scan (update) 0.5 lst |> List.tail
     {state with RunningBenefit=l}
 
 let transAnswer = 
@@ -109,7 +99,6 @@ let transAnswer =
         |> transformUpperState
     [upperState] @ midStates     
 
-let officesSalary = transAnswer.[0].Salary
 let officesRunningBen = transAnswer.[0].RunningBenefit
 let officesCurrBen = transAnswer.[0].CurrBenefit
 
@@ -133,18 +122,10 @@ Chart.Combine ([
     //Chart.Line (brookRate, Name="Rate B", Color=Color.PaleGoldenrod)
 ]) 
 |> Chart.WithLegend(InsideArea=true) 
-|> Chart.WithTitle("Net benefit of the institutions") 
-|> Chart.WithXAxis(Title="Time")
-|> Chart.WithYAxis(Title="Benefit level", Max=1.0, Min=0.0)//, Max=3000.0, Min=(-4000.0))
+|> Chart.WithTitle("Satisfaction of the institutions") 
+|> Chart.WithXAxis(Title="Time", Min=0.0)
+|> Chart.WithYAxis(Title="Satisfaction level", Max=1.0, Min=0.0)//, Max=3000.0, Min=(-4000.0))
 |> Chart.Show
-
-Chart.Combine ([
-    //Chart.Line (officesSalary, Name="Salary")
-    Chart.Line (officesCurrBen, Name = "CurrBen")
-])
-|> Chart.Show
-
-
 
 Chart.Combine ([
     //Chart.Line (cumAnswer.[0].ResourcesState, Name="Top Inst", Color=Color.Black)

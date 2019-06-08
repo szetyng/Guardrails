@@ -10,7 +10,6 @@ type SimType = Strict | Reasonable | Lenient
 type HolonState = 
     {
         SupraID : HolonID;
-        Salary : float list;                
         ResourcesState : float list;
         CurrBenefit : float list;
         RunningBenefit : float list;
@@ -200,12 +199,12 @@ let simulate agentLst simType time tmax taxBracket taxRate subsidyRate =
         let subQ, wpsSub = subAndClearQ topHolon wpsTax                  
         topHolon.MessageQueue <- subQ    
 
-        topHolon.SupraResources <- topHolon.SupraResources + wpsSub             
+        topHolon.SupraResources <- wpsSub             
                    
         let satisfactionOfInst inst = 
             let netBenefit = 
                 match hasBoss supraHolonLst inst with
-                | false -> wpsSub 
+                | false -> topHolon.SupraResources 
                 | true -> 
                     inst.Resources <- 0.0
 
@@ -249,12 +248,11 @@ let simulate agentLst simType time tmax taxBracket taxRate subsidyRate =
             let updateState insts oldState = 
                 let oldRes = oldState.ResourcesState
                 let oldBen = oldState.CurrBenefit
-                let oldSal = oldState.Salary
                 let rec getS supras = 
                     match supras with
                     | h::_ when h.ID=oldState.SupraID -> 
                         //let accumBen = List.tail 
-                        {oldState with ResourcesState=oldRes @ [h.Resources]; CurrBenefit=oldBen @ [ (satisfactionOfInst h)]; Salary=oldSal @ [h.SupraResources]}
+                        {oldState with ResourcesState=oldRes @ [h.Resources]; CurrBenefit=oldBen @ [ (satisfactionOfInst h)]}
                     | _::rest -> getS rest
                     | [] -> oldState    
                 getS insts                            
@@ -263,6 +261,6 @@ let simulate agentLst simType time tmax taxBracket taxRate subsidyRate =
             runSimulate (t+1) newState
             
     // include ID to be safe
-    let createInitState holon = {SupraID=holon.ID; ResourcesState=[holon.Resources]; CurrBenefit = [0.0]; RunningBenefit=[0.0]; Salary=[0.0]}
+    let createInitState holon = {SupraID=holon.ID; ResourcesState=[holon.Resources]; CurrBenefit = [0.0]; RunningBenefit=[0.0]}
     let initState = List.map createInitState supraHolonLst    
     runSimulate time initState 
