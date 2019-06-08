@@ -206,6 +206,7 @@ let simulate agentLst simType time tmax taxBracket taxRate subsidyRate =
                 match hasBoss supraHolonLst inst with
                 | false -> topHolon.SupraResources 
                 | true -> 
+                    // midHolons consume resources
                     inst.Resources <- 0.0
 
                     let rec getInfoFromQ q = 
@@ -215,10 +216,6 @@ let simulate agentLst simType time tmax taxBracket taxRate subsidyRate =
                         | _::rest -> getInfoFromQ rest
                         | [] -> 0.0
                     getInfoFromQ inst.MessageQueue
-
-            // Consume the resources, but not for topHolon acting as bank
-            // if hasBoss supraHolonLst inst then inst.Resources <- 0.0  
-            // else ()
 
             let clearMsg msgType msg = 
                 match msgType,msg with
@@ -231,14 +228,8 @@ let simulate agentLst simType time tmax taxBracket taxRate subsidyRate =
                 |> List.choose id
                 |> List.map (clearMsg (Subsidy(inst.ID,0.0)))
                 |> List.choose id   
-
             inst.MessageQueue <- qWithoutTax
             netBenefit
-
-            
-
-        
-   
 
         // newline to separate time slices printing
         printfn ""

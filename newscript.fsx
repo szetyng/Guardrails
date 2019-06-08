@@ -16,19 +16,18 @@ type Update =
     | Alpha of float
     | Beta of float
 
-
 let simType = Reasonable
 // lenient = 250. reasonable = 3000. strict approx 70000
 // monCost =  [5,10], tax = 20, subsidy = 5
 let topCap = 3000.0
-let taxRate = 20.0
 let monCost = 5.0
+
+let taxRate = 20.0
 let subsidyRate = 5.0
 let alphaGreat = 0.2
 let alphaOk = 0.1
 let betaHorr = 0.2
-let betaOk = 0.1
-
+let betaOk = 0.15
 
 let timeBegin = 0
 let timeMax = 250
@@ -50,7 +49,6 @@ let updateSigma coeff oldSigma =
 
 let transformUpperState state = 
     let update oldSigma benefit = 
-        //let benefit, sal = benSal
         let mapToRange inputRange outputRange x = 
             let in1,in2 = inputRange
             let out1,out2 = outputRange
@@ -58,7 +56,7 @@ let transformUpperState state =
         let mapToLinear =  mapToRange (-250.0,500.0) (-1.0,1.0) 
         let mapToGreek alphaRange betaRange x = 
             let linear = mapToLinear x
-            let threshold = mapToLinear 0.0
+            let threshold = mapToLinear 0.0 // let 0 in CurrBenefit be the threshold
             //let threshold = 0.0
             match linear with
             | l when l<threshold -> 
@@ -69,9 +67,8 @@ let transformUpperState state =
                 let alf = mapToRange (threshold,1.0) alphaRange  l
                 Alpha alf  
             | _ -> Alpha 0.0            
-        let coeff = mapToGreek (0.1,0.2) (0.1,0.2) benefit // alphaRange = (0.05,0.1)
+        let coeff = mapToGreek (alphaOk,alphaGreat) (betaOk,betaHorr) benefit
         updateSigma coeff oldSigma            
-    //let lst = List.map2 (fun b s -> b,s) state.CurrBenefit state.Salary    
     let l = List.scan (update) 0.5 state.CurrBenefit |> List.tail
     {state with RunningBenefit=l}
 
