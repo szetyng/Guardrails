@@ -74,7 +74,7 @@ let simulate agentLst simType time tmax taxBracket taxRate subsidyRate =
 
         let workPerSalary =             
             match List.isEmpty topHolon.MessageQueue with 
-            | true -> 5.0*50.0
+            | true -> 0.0//5.0*50.0
                 //topHolon.SupraResources <- topHolon.SupraResources + (5.0*50.0)
             | false -> 0.0 //()        
         
@@ -93,8 +93,8 @@ let simulate agentLst simType time tmax taxBracket taxRate subsidyRate =
                 boss.Resources <- boss.Resources + amt - skim
                 //boss.SupraResources <- boss.SupraResources + skim - (nr*5.0) // monCost - work effort
                 inst.MessageQueue <- inst.MessageQueue @ [Tax(i,amt)]
-                printfn "inst %s paid TAX: %f :(, upper skimmed %f, used up %f to do work" inst.Name amt skim (nr*5.0)
-                None, skim - (nr*5.0) // monCost - work effort
+                printfn "inst %s paid TAX: %f :(, upper skimmed %f" inst.Name amt skim
+                None, skim// - (nr*5.0) // monCost - work effort
             | Some amt, Tax(i, _) ->
                 let inst = List.find (fun agent -> agent.ID=i) members
                 let nr = List.length (getBaseMembers agentLst inst) |> float
@@ -103,8 +103,8 @@ let simulate agentLst simType time tmax taxBracket taxRate subsidyRate =
                 boss.Resources <- boss.Resources + amt - skim
                 //boss.SupraResources <- boss.SupraResources + skim - (nr*5.0) // monCost - work effort
                 inst.MessageQueue <- inst.MessageQueue @ [Tax(i,amt)] 
-                printfn "inst %s only has to pay %f in tax bc max, upper skimmed %f, used up %f to do work" inst.Name amt skim (nr*5.0)
-                None, skim - (nr*5.0) // monCost - work effort            
+                printfn "inst %s only has to pay %f in tax bc max, upper skimmed %f" inst.Name amt skim 
+                None, skim// - (nr*5.0) // monCost - work effort            
             | _, m -> Some m, 0.0
         // If msg is Subsidy, subsidises that member by taking from boss
         // and Subsidy msg is removed
@@ -117,8 +117,8 @@ let simulate agentLst simType time tmax taxBracket taxRate subsidyRate =
                 boss.Resources <- boss.Resources - amt
                 //boss.SupraResources <- boss.SupraResources - (nr*5.0)
                 inst.MessageQueue <- inst.MessageQueue @ [Subsidy(i,amt)]
-                printfn "inst %s got SUBSIDY: %f :), upper used up %f to do work" inst.Name amt (nr*5.0)
-                None, -(nr*5.0)
+                printfn "inst %s got SUBSIDY: %f :), upper used up %f to do work" inst.Name amt (nr*6.0)
+                None, -(nr*6.0)
             | false, Subsidy(i,_) -> 
                 let inst = List.find (fun agent -> agent.ID=i) members
                 let bank = boss.Resources
@@ -134,8 +134,8 @@ let simulate agentLst simType time tmax taxBracket taxRate subsidyRate =
                 boss.Resources <- boss.Resources - sub 
                 //boss.SupraResources <- boss.SupraResources - (nr*5.0)
                 inst.MessageQueue <- inst.MessageQueue @ [Subsidy(i,sub)]
-                printfn "inst %s only got subsidy %f because not enough, upper used up %f to do work" inst.Name sub (nr*5.0)
-                None, -(nr*5.0)          
+                printfn "inst %s only got subsidy %f because not enough" inst.Name sub 
+                None, 0.0// -(nr*5.0)          
             | _, m -> Some m, 0.0  
 
         // TODO: separate into two -> tax first then figure out if there's enough for subsidy

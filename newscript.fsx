@@ -18,10 +18,12 @@ type Update =
 
 
 let simType = Reasonable
-let topCap = 1000.0
+// lenient = 250. reasonable = 3000. strict approx 70000
+// monCost =  [5,10], tax = 20, subsidy = 5
+let topCap = 250.0
 let taxRate = 20.0
 let monCost = 5.0
-let subsidyRate = 10.0
+let subsidyRate = 5.0
 let alphaGreat = 0.2
 let alphaOk = 0.1
 let betaHorr = 0.2
@@ -49,10 +51,34 @@ let updateSigma coeff oldSigma =
 let transformUpperState state = 
     let upper oldSigma benSal = 
         let benefit, sal = benSal
-        match benefit with
-        | ben when ben>0.0 -> updateSigma (Alpha alphaGreat) oldSigma
-        | ben when ben<0.0 -> updateSigma (Beta betaOk) oldSigma
-        | ben when ben=0.0 -> updateSigma (Alpha alphaOk) oldSigma
+        let mapToRange inputRange outputRange x = 
+            let in1,in2 = inputRange
+            let out1,out2 = outputRange
+            out1 + ((x-in1)*(out2-out1))/(in2-in1)
+        let mapToLinear =  mapToRange (-250.0,500.0) (-1.0,1.0) 
+        let mapToGreek alphaRange betaRange x = 
+            let linear = mapToLinear x
+            let threshold = mapToLinear 0.0
+            //let threshold = 0.0
+            match linear with
+            | l when l<threshold -> 
+                let b1,b2 = betaRange 
+                let neg = mapToRange (-1.0,threshold) (-b2,-b1) l  
+                Beta -(neg)
+            | l when l>=threshold-> 
+                let alf = mapToRange (threshold,1.0) alphaRange  l
+                Alpha alf  
+            | _ -> Alpha 0.0            
+        let coeff = mapToGreek (0.1,0.2) (0.1,0.2) benefit // alphaRange = (0.05,0.1)
+        updateSigma coeff oldSigma            
+
+
+        // match benefit with
+        // | ben when ben>250.0 -> updateSigma (Alpha 0.1) oldSigma // yay great
+        // | ben when ben>0.0 -> updateSigma (Alpha 0.05) oldSigma
+        // | ben when ben<0.0 -> updateSigma (Beta betaOk) oldSigma // boo ok
+        //     // the one above happens VERY often when monCost is low
+        // | ben when ben=0.0 -> updateSigma (Alpha alphaOk) oldSigma // yay ok
 
     let lst = List.map2 (fun b s -> b,s) state.CurrBenefit state.Salary    
     let l = List.scan (upper) 0.5 lst |> List.tail
