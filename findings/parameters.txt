@@ -1,0 +1,14 @@
+naming convention: type-target-monCost.png
+
+betaOk = 0.15
+betaHorr = 0.2
+alphaOk = 0.1
+alphaGreat = 0.2
+
+taxRate = 20
+subsidyRate = 5
+
+refillRateA = [High; High; Low; Low; Low; High; High; Low]
+refillRateB = [Low; High; High; Low; High; High; Low; Low]
+
+effort to subsidise = 6

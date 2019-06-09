@@ -20,14 +20,14 @@ let simType = Reasonable
 // lenient = 250. reasonable = 3000. strict approx 70000
 // monCost =  [5,10], tax = 20, subsidy = 5
 let topCap = 3000.0
-let monCost = 5.0
+let monCost = 10.0
 
 let taxRate = 20.0
 let subsidyRate = 5.0
-let alphaGreat = 0.2
-let alphaOk = 0.1
-let betaHorr = 0.2
 let betaOk = 0.15
+let betaHorr = 0.2
+let alphaOk = 0.1
+let alphaGreat = 0.2
 
 let timeBegin = 0
 let timeMax = 250
