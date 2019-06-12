@@ -19,7 +19,7 @@ type Update =
 let simType = Reasonable
 // lenient = 250. reasonable = 3000. strict approx 70000
 // monCost =  [5,10], tax = 20, subsidy = 5
-let topCap = 3000.0
+let topCap = 70000.0
 let monCost = 10.0
 
 let taxRate = 20.0
@@ -111,16 +111,47 @@ let brookRunningBen = transAnswer.[2].RunningBenefit
 
 printfn "%A" transAnswer
 
+let allInThisTgt threshold buffer tMax lstOfLst = 
+    let quitIfAngry threshold buffer satisLst = 
+        let isLessThanThres thres buff accTuple x = 
+            let _,acc = accTuple
+            match x<=thres, acc<buff with
+            | true, true -> Some x, acc+1
+            | false, true -> Some x, acc
+            | _, false -> None, acc
+            //| _, false -> Some 0.0, acc
+
+        satisLst
+        |> List.scan (isLessThanThres threshold buffer) (None,0)
+        |> List.map fst
+        |> List.choose id // Head is None
+    let padWithZeros zLst lst = lst @ zLst
+           
+    let thresholdedLsts = List.map (quitIfAngry threshold buffer) lstOfLst
+    let lstOfLengths = List.map List.length thresholdedLsts 
+    let t = List.min lstOfLengths
+    let zeroLst = List.init (tMax+1-t) (fun _ -> 0.0) 
+    
+    thresholdedLsts
+    |> List.map ((List.take t) >> (padWithZeros zeroLst))
+
+let quitLst = allInThisTgt 0.2 15 timeMax [parksRunningBen;brookRunningBen;officesRunningBen]
+let parksQuitBen = quitLst.[0]
+let brookQuitBen = quitLst.[1]
+let officesQuitBen = quitLst.[2]
+
+
+
 Chart.Combine ([
-    Chart.Line (parksRunningBen, Name="dCES A")
-    Chart.Line (brookRunningBen, Name="dCES B")
-    Chart.Line (officesRunningBen, Name="Aggregated dCES")
+    Chart.Line (parksQuitBen, Name="dCES A")
+    Chart.Line (brookQuitBen, Name="dCES B")
+    Chart.Line (officesQuitBen, Name="Aggregated dCES")
     //Chart.Line (parksRate, Name="Rate A", Color=Color.PaleTurquoise )
     //Chart.Line (brookRate, Name="Rate B", Color=Color.PaleGoldenrod)
 ]) 
 |> Chart.WithLegend(InsideArea=true) 
 |> Chart.WithTitle("Satisfaction of the institutions", InsideArea=false) 
-|> Chart.WithXAxis(Title="Time", Min=0.0)
+|> Chart.WithXAxis(Title="Time", Min=0.0, Max=float(timeMax))
 |> Chart.WithYAxis(Title="Satisfaction level", Max=1.0, Min=0.0)//, Max=3000.0, Min=(-4000.0))
 |> Chart.Show
 
