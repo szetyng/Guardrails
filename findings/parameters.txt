@@ -12,3 +12,7 @@ refillRateA = [High; High; Low; Low; Low; High; High; Low]
 refillRateB = [Low; High; High; Low; High; High; Low; Low]
 
 effort to subsidise = 6
+
+To quit:
+threshold = 0.2
+grace period = 15 (not continuous, doesn't reset)
