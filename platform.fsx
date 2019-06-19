@@ -17,7 +17,6 @@ let checkRole agent role =
     | _, _ -> false
 
 /// get holonID of the supra-institution that Agent belongs to
-/// TODO: list might not be sorted
 let getSupraID agent = 
     match agent.RoleOf with
     | Some (Member supraID) -> Some supraID
@@ -136,7 +135,6 @@ let calculateTaxSubsidy taxBracket taxRate needPayTax subsidyRate agentLst inst 
         printfn "%s's members get %f each" inst.Name (xPerMem)      
         None  
     | (xPerMem, _) when xPerMem < taxBracket ->
-        // TODO: wrong to print it here, bc subsidy might get rejected 
         printfn "%s's members get %f each, with subsidy of %f to get %f in total" inst.Name xPerMem subsidyRate (xPerMem + subsidyRate)
         Some (Subsidy(inst.ID, subsidyRate*totalMembers))
     | x, _ -> 
